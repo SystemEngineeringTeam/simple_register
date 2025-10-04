@@ -14,7 +14,7 @@ export function StatusBar(): ReactElement {
       <p.div p="1">
         <IconMaterialSymbolsSync
           className={css({
-            animationName: "pulse",
+            animation: "pulse",
             animationTimingFunction: "step-start",
           })}
         />

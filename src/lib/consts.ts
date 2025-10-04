@@ -13,3 +13,7 @@ export const INFO = {
     localStorageVersion: 1,
   },
 } as const;
+
+export function getLocalStorageKey(key: string, trailingColon = false): string {
+  return `${INFO.id}.v${INFO.config.localStorageVersion}.${key}${trailingColon ? ":" : ""}`;
+}
