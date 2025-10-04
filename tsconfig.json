@@ -1,25 +1,45 @@
 {
+  "extends": "@tsconfig/strictest/tsconfig.json",
   "compilerOptions": {
-    "target": "ES2020",
-    "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
-    "skipLibCheck": true,
-
-    /* Bundler mode */
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
+    "target": "ES2022",
     "jsx": "react-jsx",
-
-    /* Linting */
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "useDefineForClassFields": true,
+    "baseUrl": ".",
+    "rootDirs": [
+      ".",
+      "./.react-router/types"
+    ],
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "paths": {
+      "@/*": ["src/*"],
+      "~/*": ["./public/*"],
+      "panda/*": ["./panda/*"],
+      "package": ["./package.json"]
+    },
+    "resolveJsonModule": true,
+    "types": [
+      "node",
+      "vite/client",
+      "unplugin-icons/types/react",
+      "unplugin-fonts/client"
+    ],
+    "noEmit": true,
+    "outDir": "dist",
+    "forceConsistentCasingInFileNames": true,
+    "verbatimModuleSyntax": true
   },
-  "include": ["src"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "include": [
+    "**/*",
+    "**/.server/**/*",
+    "**/.client/**/*",
+    ".react-router/types/**/*",
+    "panda.config.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "build/",
+    "panda/"
+  ]
 }

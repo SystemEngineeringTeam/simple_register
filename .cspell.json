@@ -1,0 +1,17 @@
+{
+  "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
+  "ignorePaths": [
+    "package.json",
+    "**/*.svg"
+  ],
+  "words": [
+    "formkit",
+    "nanostores",
+    "Oclock",
+    "palt",
+    "pandacss",
+    "Sysken",
+    "TAURI",
+    "unfonts"
+  ]
+}
