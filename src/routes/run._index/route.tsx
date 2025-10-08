@@ -1,4 +1,5 @@
 import type { ReactElement } from "react";
+import { css } from "panda/css";
 import { styled as p } from "panda/jsx";
 import { Expanded } from "@/components/atomic/Expanded";
 import { ActiveArea } from "./ActiveArea";
@@ -11,6 +12,12 @@ export default function (): ReactElement {
   return (
     <Expanded basedOn="screen">
       <p.div
+        className={css({
+          "& > *": {
+            outline: "1px solid",
+            outlineColor: "gray.200",
+          },
+        })}
         display="grid"
         gridTemplateAreas={`
           "basic-info order-queue"

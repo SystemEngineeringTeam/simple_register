@@ -4,9 +4,19 @@ import { defineGlobalStyles, defineKeyframes } from "@pandacss/dev";
 export const highlight = defineGlobalStyles({
   div: {
     "& [data-highlight-warn='true']": {
-      animationDuration: "2s",
+      "animationDuration": "2s",
+      "animationName": "highlight-warn",
+      "animationIterationCount": "infinite",
+      "animationTimingFunction": "steps(2, jump-none)",
+      "& > .flash": {
+        animation: "ping",
+        animationDuration: "2s",
+      },
+    },
+    "& [data-highlight-warn-once='true']": {
+      animationDuration: "1s",
       animationName: "highlight-warn",
-      animationIterationCount: "infinite",
+      animationIterationCount: "3",
       animationTimingFunction: "steps(2, jump-none)",
     },
   },
@@ -16,7 +26,7 @@ export const highlight = defineGlobalStyles({
 export const highlightKeyframes = defineKeyframes({
   "highlight-warn": {
     "0%": {
-      background: "yellow.200",
+      background: "highlight.bg",
     },
     "100%": {
       background: "transparent",

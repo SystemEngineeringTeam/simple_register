@@ -4,92 +4,12 @@ import { styled as p } from "panda/jsx";
 import { useEffect, useRef } from "react";
 import { match, P } from "ts-pattern";
 import { Expanded } from "@/components/atomic/Expanded";
+import { Table } from "@/components/atomic/Table";
+import { OrderStatusLabel } from "@/components/OrderStatusLabel";
 import { ItemImpl } from "@/lib/item";
 import { OrderStatusImpl } from "@/lib/order";
 import { $orders } from "@/lib/stores/orders";
 import { dateToStr } from "@/lib/time";
-
-const Thead = p("thead", {
-  base: {
-    "position": "sticky",
-    "top": 0,
-    "zIndex": 10,
-    "& > tr": {
-      "bg": "gray.200",
-      "& > th": {
-        p: "2",
-        verticalAlign: "top",
-        bg: "gray.200",
-      },
-    },
-  },
-});
-
-const Tbody = p("tbody", {
-  base: {
-    "& > tr": {
-      "borderBottom": "1px solid",
-      "borderColor": "gray.200",
-      "& > td": {
-        verticalAlign: "top",
-        p: "1",
-      },
-    },
-  },
-});
-
-const TableCell = p("td", {
-  base: {
-    fontFamily: "mono",
-  },
-  variants: {
-    align: {
-      center: { textAlign: "center" },
-      right: { textAlign: "right" },
-    },
-  },
-});
-
-const OrderItem = p("div", {
-  base: {
-    alignItems: "center",
-    display: "flex",
-    gap: "2",
-  },
-});
-
-const ItemNumber = p("div", {
-  base: {
-    color: "gray.600",
-    fontSize: "sm",
-    textAlign: "center",
-    w: "16",
-  },
-});
-
-const ItemName = p("div", {
-  base: {
-    flex: "1",
-  },
-});
-
-const ItemPrice = p("div", {
-  base: {
-    fontFamily: "mono",
-    color: "gray.600",
-    textAlign: "right",
-    w: "20",
-  },
-});
-
-const ItemAmount = p("div", {
-  base: {
-    fontFamily: "mono",
-    fontWeight: "bold",
-    textAlign: "center",
-    w: "12",
-  },
-});
 
 export function OrderQueue(): ReactElement {
   const orders = useStore($orders);
@@ -111,7 +31,7 @@ export function OrderQueue(): ReactElement {
         ref={tableContainerRef}
       >
         <p.table w="full">
-          <Thead>
+          <Table.head>
             <p.tr>
               <p.th w="10"></p.th>
               <p.th w="20">受付番号</p.th>
@@ -134,41 +54,49 @@ export function OrderQueue(): ReactElement {
               <p.th w="20">注文時刻</p.th>
               <p.th w="20">受取時刻</p.th>
             </p.tr>
-          </Thead>
-          <Tbody>
+          </Table.head>
+          <Table.body>
             {orders.map((order) => (
-              <p.tr key={order.id}>
+              <p.tr
+                data-highlight-warn-once={order.id === "y5mvfgyj03do1dgh92e17ek2"}
+                key={order.id}
+                style={{ backgroundColor: OrderStatusImpl(order.status).toColor().bg }}
+              >
                 <p.td />
-                <TableCell align="right">{order.receiptNumber}</TableCell>
+                <Table.cell align="right">
+                  <p.p bg="white" border="1px solid" ml="auto" mr="0" textAlign="center" w="[30px]">
+                    {order.receiptNumber}
+                  </p.p>
+                </Table.cell>
                 <p.td>
                   {order.items.map((item, index) => (
-                    <OrderItem key={item.id}>
-                      <ItemNumber>
+                    <Table.OrderItem key={item.id}>
+                      <Table.ItemNumber>
                         {String(index + 1).padStart(2, "0")}
-                      </ItemNumber>
-                      <ItemName>
+                      </Table.ItemNumber>
+                      <Table.ItemName>
                         {
                           match(ItemImpl(item).getGroup()?.name)
                             .with(P.nullish, () => "")
                             .otherwise((name) => `${name}/`)
                         }
                         {item.name}
-                      </ItemName>
-                      <ItemPrice>{item.price}</ItemPrice>
-                      <ItemAmount>{item.amount}</ItemAmount>
-                    </OrderItem>
+                      </Table.ItemName>
+                      <Table.ItemPrice>{item.price}</Table.ItemPrice>
+                      <Table.ItemAmount>{item.amount}</Table.ItemAmount>
+                    </Table.OrderItem>
                   ))}
                 </p.td>
-                <TableCell
+                <Table.cell
                   align="center"
                   fontSize="sm"
                 >
-                  {OrderStatusImpl(order.status).toLabelStr()}
-                </TableCell>
-                <TableCell align="center">
+                  <OrderStatusLabel orderStatus={order.status} />
+                </Table.cell>
+                <Table.cell align="center">
                   {dateToStr(order.createdAt).timeOnly}
-                </TableCell>
-                <TableCell align="center">
+                </Table.cell>
+                <Table.cell align="center">
                   {order.status === "PICKED_UP"
                     ? new Date(
                         order.statusChange.find((sc) => sc.to === "PICKED_UP")?.at ?? order.createdAt,
@@ -177,10 +105,10 @@ export function OrderQueue(): ReactElement {
                         minute: "2-digit",
                       })
                     : "--:--"}
-                </TableCell>
+                </Table.cell>
               </p.tr>
             ))}
-          </Tbody>
+          </Table.body>
         </p.table>
       </p.div>
     </Expanded>

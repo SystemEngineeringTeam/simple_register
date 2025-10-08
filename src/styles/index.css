@@ -3,3 +3,10 @@
 ::view-transition-group(root) {
   animation-duration: 200ms;
 }
+
+/* ref: https://qiita.com/chimayu/items/58e3481305e91d188be3 */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
