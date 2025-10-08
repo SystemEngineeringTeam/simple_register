@@ -1,27 +1,24 @@
 import type { ReactElement } from "react";
 import { css } from "panda/css";
-import { VStack } from "panda/jsx";
 import { Expanded } from "@/components/atomic/Expanded";
+import { AmountSection } from "./active-area/AmountSection";
 import { OrderTable } from "./active-area/OrderTable";
-
-// type OrderPhase = "order_number" | "menu_selection" | "subtotal" | "payment";
-type OrderPhase
-  = | "CHECK_RECEIPT_NUMBER"
-    | "SELECT_ITEMS"
-    | "CONFIRM_SUBTOTAL"
-    | "PROCESS_PAYMENT";
+import { PhaseIndicator } from "./active-area/PhaseIndicator";
 
 function LeftArea(): ReactElement {
-  return <Expanded></Expanded>;
+  return (
+    <Expanded>
+      <OrderTable />
+    </Expanded>
+  );
 }
 
 function RightArea(): ReactElement {
   return (
-    <VStack alignItems="flex-start" w="100%">
-      <Expanded>
-        <OrderTable />
-      </Expanded>
-    </VStack>
+    <Expanded display="flex" flexDirection="column" justifyContent="space-between">
+      <AmountSection />
+      <PhaseIndicator />
+    </Expanded>
   );
 }
 
