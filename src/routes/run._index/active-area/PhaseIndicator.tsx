@@ -25,6 +25,7 @@ export function PhaseIndicator(): ReactElement {
           _active={{
             bg: "blue.600",
             color: "white",
+            fontWeight: "bold",
           }}
           clipPath={{
             base: "polygon(95% 0%, 100% 50%, 95% 100%, 0% 100%, 5% 50%, 0% 0%)",

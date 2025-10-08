@@ -13,12 +13,15 @@ const TableBodyRow = p("tr", {
       fontFamily: "sans",
       fontWeight: "bold",
     },
+    "& > td > :last-child": {
+      pr: "2",
+    },
   },
 });
 
 export function AmountSection(): ReactElement {
   return (
-    <VStack alignItems="flex-start" px="4" w="100%">
+    <VStack alignItems="flex-start" w="100%">
       <p.table w="100%">
         <Table.head>
           <p.tr>
@@ -27,23 +30,6 @@ export function AmountSection(): ReactElement {
           </p.tr>
         </Table.head>
         <Table.body>
-          <TableBodyRow>
-            <Table.cell align="right" verticalAlign="middle!">
-              受付番号
-            </Table.cell>
-            <Table.cell>
-              <NumberInput
-                h="10"
-                outline={{
-                  base: "2px solid",
-                  _focus: "4px solid",
-                }}
-                outlineColor="black"
-                textAlign="center"
-                w="10"
-              />
-            </Table.cell>
-          </TableBodyRow>
           <TableBodyRow bg="green.600" color="white">
             <Table.cell align="right" verticalAlign="middle!">
               合計
@@ -62,17 +48,21 @@ export function AmountSection(): ReactElement {
             <Table.cell textAlign="right">
               <HStack gap="2" justifyContent="flex-end">
                 <HStack>
-                  <p.p fontWeight="normal">割引種別番号</p.p>
-                  <NumberInput
-                    h="10"
-                    outline={{
-                      base: "2px solid",
-                      _focus: "4px solid",
-                    }}
-                    outlineColor="black"
-                    textAlign="center"
-                    w="10"
-                  />
+                  <p.p fontWeight="normal">割引番号</p.p>
+                  <HStack gap="2">
+                    <p.code color="gray.500">D</p.code>
+                    <NumberInput
+                      h="10"
+                      outline={{
+                        base: "2px solid",
+                        _focus: "4px solid",
+                      }}
+                      outlineColor="black"
+                      textAlign="center"
+                      w="10"
+                    />
+                  </HStack>
+
                 </HStack>
                 <p.code
                   color="red.600"

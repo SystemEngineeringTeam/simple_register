@@ -2,10 +2,18 @@ import type { ReactElement } from "react";
 import { css } from "panda/css";
 import { Expanded } from "@/components/atomic/Expanded";
 import { AmountSection } from "./active-area/AmountSection";
+import { Information } from "./active-area/Information";
 import { OrderTable } from "./active-area/OrderTable";
-import { PhaseIndicator } from "./active-area/PhaseIndicator";
 
 function LeftArea(): ReactElement {
+  return (
+    <Expanded>
+      <Information />
+    </Expanded>
+  );
+}
+
+function MiddleArea(): ReactElement {
   return (
     <Expanded>
       <OrderTable />
@@ -15,9 +23,8 @@ function LeftArea(): ReactElement {
 
 function RightArea(): ReactElement {
   return (
-    <Expanded display="flex" flexDirection="column" justifyContent="space-between">
+    <Expanded>
       <AmountSection />
-      <PhaseIndicator />
     </Expanded>
   );
 }
@@ -32,9 +39,10 @@ export function ActiveArea(): ReactElement {
         },
       })}
       display="grid"
-      gridTemplateColumns="1fr 1fr"
+      gridTemplateColumns="1fr 1fr 1fr"
     >
       <LeftArea />
+      <MiddleArea />
       <RightArea />
     </Expanded>
   );

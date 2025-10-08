@@ -23,28 +23,31 @@ export function OrderTableRow(props: Props): ReactElement {
     <p.tr color="gray.500">
       <Table.cell align="right">{props.index}</Table.cell>
       <Table.cell align="right" color="black">
-        <NumberInput
-          onChange={(e: ChangeEvent<HTMLInputElement>) => {
-            props.onChange("productCode", e.target.value);
-          }}
-          onFocus={props.onFocus
-            ? (_e): void => {
-                props.onFocus!("productCode");
-              }
-            : undefined}
-          onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-            props.onKeyDown("productCode", e);
-          }}
-          ref={props.productCodeRef}
-          value={props.productCode}
-          w="20"
-        />
+        <HStack gap="2" justifyContent="flex-end" w="full">
+          <p.code color="gray.500">T</p.code>
+          <NumberInput
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              props.onChange("productCode", e.target.value);
+            }}
+            onFocus={props.onFocus
+              ? (_e): void => {
+                  props.onFocus!("productCode");
+                }
+              : undefined}
+            onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
+              props.onKeyDown("productCode", e);
+            }}
+            ref={props.productCodeRef}
+            value={props.productCode}
+            w="10"
+          />
+        </HStack>
       </Table.cell>
       <Table.cell fontFamily="sans">
         {props.productCode ? `商品名(${props.productCode})` : ""}
       </Table.cell>
       <Table.cell align="right">
-        150
+        ---
       </Table.cell>
       <Table.cell align="right">
         <HStack>
