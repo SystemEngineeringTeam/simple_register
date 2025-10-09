@@ -1,141 +1,254 @@
 /* eslint-disable react/no-create-ref */
 import type { ReactElement, RefObject } from "react";
+import type { OrderRowInput } from "@/lib/stores/current-order";
+import { useStore } from "@nanostores/react";
 import { styled as p } from "panda/jsx";
-import { createRef, useEffect, useRef, useState } from "react";
+import { createRef, useEffect, useMemo, useRef, useState } from "react";
 
 import { Table } from "@/components/atomic/Table";
+import {
+  focusReceiptInput,
+  registerOrderFocusHelpers,
+} from "@/lib/focus-manager";
+import {
+  $currentOrder,
+  appendOrderRow,
+  createOrderRow,
+  updateOrderRows,
+} from "@/lib/stores/current-order";
+import { $orderPhase } from "@/lib/stores/phase";
 import { OrderTableRow } from "./OrderTableRow";
 
 export type KeyField = "productCode" | "quantity";
 
-type Row = {
-  id: number;
-  productCode: string;
-  quantity: string;
-};
 type RowRefs = Record<KeyField, RefObject<HTMLInputElement | null>>;
 
-const initialRow = (): Row => ({ id: Date.now() + Math.random(), productCode: "", quantity: "" });
+function createRowRefs(): RowRefs {
+  return {
+    productCode: createRef<HTMLInputElement>(),
+    quantity: createRef<HTMLInputElement>(),
+  };
+}
+
+function isRowEmpty(row: OrderRowInput): boolean {
+  return row.productCode === "" && row.quantity === "";
+}
 
 export function OrderTable(): ReactElement {
-  const [rows, setRows] = useState<Row[]>(() => [initialRow()]);
-  const tableRef = useRef<HTMLTableElement>(null);
+  const { rows } = useStore($currentOrder);
+  const orderPhase = useStore($orderPhase);
+  const isActive = orderPhase === "SELECT_ITEMS";
 
-  // 各行の各セル（商品番号・個数）にrefを持つ
-  const [rowRefs, setRowRefs] = useState<RowRefs[]>(() => [
-    { productCode: createRef<HTMLInputElement>(), quantity: createRef<HTMLInputElement>() },
-  ]);
-
-  // rowsの増減に合わせてrefも増減
-  if (rowRefs.length < rows.length) {
-    setRowRefs((prev) => [
-      ...prev,
-      ...Array.from({ length: rows.length - prev.length }, () => ({ productCode: createRef<HTMLInputElement>(), quantity: createRef<HTMLInputElement>() })),
-    ]);
-  } else if (rowRefs.length > rows.length) {
-    setRowRefs((prev) => prev.slice(0, rows.length));
-  }
-
-  // 完全に空の行は1つだけ残す
-  const nonEmptyRows = rows.filter((r) => r.productCode !== "" || r.quantity !== "");
-  let displayRows: Row[] = [];
-  if (nonEmptyRows.length === 0) {
-    if (rows[0])
-      displayRows = [rows[0]];
-  } else {
-    displayRows = [...nonEmptyRows];
-    // 最後の行が空なら1つだけ追加
-    const last = rows[rows.length - 1];
-    if (last && last.productCode === "" && last.quantity === "") {
-      displayRows.push(last);
+  const displayRows = useMemo<OrderRowInput[]>(() => {
+    const nonEmptyRows = rows.filter((row) => !isRowEmpty(row));
+    if (nonEmptyRows.length === 0) {
+      return rows[0] ? [rows[0]] : [];
     }
-  }
+
+    const nextRows = [...nonEmptyRows];
+    const last = rows[rows.length - 1];
+    if (last && isRowEmpty(last)) {
+      nextRows.push(last);
+    }
+    return nextRows;
+  }, [rows]);
+
+  const [rowRefs, setRowRefs] = useState<RowRefs[]>(() => displayRows.map(() => createRowRefs()));
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks-extra/no-direct-set-state-in-use-effect
+    setRowRefs((previous) => {
+      if (previous.length === displayRows.length) {
+        return previous;
+      }
+      if (previous.length < displayRows.length) {
+        return [
+          ...previous,
+          ...Array.from({ length: displayRows.length - previous.length }, () => createRowRefs()),
+        ];
+      }
+      return previous.slice(0, displayRows.length);
+    });
+  }, [displayRows.length]);
+
+  const [pendingFocusIndex, setPendingFocusIndex] = useState<number>();
+  const tableRef = useRef<HTMLTableElement>(null);
+  const hasActivatedRef = useRef(false);
+
+  const rowIndexMap = useMemo(() => {
+    const map = new Map<number, number>();
+    rows.forEach((row, index) => {
+      map.set(row.id, index);
+    });
+    return map;
+  }, [rows]);
+
+  useEffect(() => {
+    if (!isActive) {
+      hasActivatedRef.current = false;
+      return;
+    }
+    if (hasActivatedRef.current) {
+      return;
+    }
+    if (pendingFocusIndex != null) {
+      hasActivatedRef.current = true;
+      return;
+    }
+
+    const firstInput = rowRefs[0]?.productCode.current;
+    if (firstInput) {
+      firstInput.focus();
+      firstInput.select();
+      hasActivatedRef.current = true;
+    }
+  }, [isActive, pendingFocusIndex, rowRefs]);
+
+  useEffect(() => {
+    registerOrderFocusHelpers({
+      focusFirstRowProductInput: () => {
+        if (displayRows.length === 0) {
+          return;
+        }
+        setPendingFocusIndex(0);
+      },
+      focusLastRowProductInput: () => {
+        if (displayRows.length === 0) {
+          return;
+        }
+        setPendingFocusIndex(displayRows.length - 1);
+      },
+    });
+    return (): void => {
+      registerOrderFocusHelpers({});
+    };
+  }, [displayRows.length]);
+
+  useEffect(() => {
+    if (!isActive) {
+      return;
+    }
+    if (pendingFocusIndex == null) {
+      return;
+    }
+    const input = rowRefs[pendingFocusIndex]?.productCode.current;
+    if (input) {
+      input.focus();
+      input.select();
+      hasActivatedRef.current = true;
+      // eslint-disable-next-line react-hooks-extra/no-direct-set-state-in-use-effect
+      setPendingFocusIndex(undefined);
+    }
+  }, [isActive, pendingFocusIndex, rowRefs]);
 
   const handleChange = (rowId: number, field: KeyField, value: string): void => {
-    setRows((prev) => prev.map((r) => r.id === rowId ? { ...r, [field]: value } : r));
+    updateOrderRows((previousRows) =>
+      previousRows.map((row) => row.id === rowId ? { ...row, [field]: value } : row),
+    );
   };
 
-  // 個数セルにフォーカス時、末尾なら新行追加
-  const handleFocus = (rowIdx: number, field: KeyField): void => {
-    if (field === "quantity") {
-      setRows((prev) => {
-        if (rowIdx === prev.length - 1) {
-          return [...prev, initialRow()];
-        }
-        return prev;
-      });
+  const handleFocus = (rowId: number, field: KeyField): void => {
+    if (!isActive || field !== "quantity") {
+      return;
+    }
+    const targetIndex = rowIndexMap.get(rowId);
+    if (targetIndex == null) {
+      return;
+    }
+    if (targetIndex === rows.length - 1) {
+      appendOrderRow();
     }
   };
 
-  const [pendingFocusRow, setPendingFocusRow] = useState<number>();
-  const handleKeyDown = (rowIdx: number, field: KeyField, e: React.KeyboardEvent<HTMLInputElement>): void => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      // 商品番号が空なら何もしない
-      if (rows[rowIdx]?.productCode === "") {
+  const handleKeyDown = (row: OrderRowInput, displayIndex: number, field: KeyField, event: React.KeyboardEvent<HTMLInputElement>): void => {
+    if (!isActive) {
+      return;
+    }
+
+    if (event.key === "Enter") {
+      event.preventDefault();
+      const currentValue = event.currentTarget.value.trim();
+      const targetIndex = rowIndexMap.get(row.id);
+      if (targetIndex == null) {
         return;
       }
 
-      setRows((prev) => {
-        let updated = prev.map((r, i) => {
-          if (i !== rowIdx)
-            return r;
-          // 個数セルでEnter時、空なら'1'で補完
-          if (field === "quantity" && (!r.quantity || r.quantity === "")) {
-            return { ...r, quantity: "1" };
-          }
-          // 商品番号セルでEnter時、quantityも空なら'1'で補完
-          if (field === "productCode" && (!r.quantity || r.quantity === "")) {
-            return { ...r, quantity: "1" };
-          }
-          return r;
-        });
-        if (rowIdx === prev.length - 1) {
-          updated = [...updated, initialRow()];
+      if (field === "productCode") {
+        const isLastDisplayRow = displayIndex === displayRows.length - 1;
+        if (isLastDisplayRow && currentValue === "") {
+          $orderPhase.set("CHECK_DISCOUNT");
+          return;
         }
-        return updated;
+        if (currentValue === "") {
+          return;
+        }
+      }
+
+      updateOrderRows((previousRows) => {
+        const index = previousRows.findIndex((candidate) => candidate.id === row.id);
+        if (index === -1) {
+          return previousRows;
+        }
+
+        const nextRows = [...previousRows];
+        const targetRow = nextRows[index];
+        if (!targetRow) {
+          return previousRows;
+        }
+        if ((field === "quantity" || field === "productCode") && targetRow.quantity.trim() === "") {
+          nextRows[index] = { ...targetRow, quantity: "1" };
+        }
+        return nextRows;
       });
-      setPendingFocusRow(rowIdx + 1);
-    } else if (e.key === "Tab") {
-      // Tabで次セル（デフォルト挙動）
-    } else if (e.key === "Backspace") {
-      // Backspaceでセルを空にし前のセルに戻る
-      e.preventDefault();
-      setRows((prev) => {
-        // すべて空なら1行だけ残す
-        const updated = prev.map((r, i) =>
-          i === rowIdx ? { ...r, [field]: "" } : r,
+
+      if (targetIndex === rows.length - 1) {
+        appendOrderRow();
+      }
+
+      setPendingFocusIndex(displayIndex + 1);
+    } else if (event.key === "Backspace") {
+      event.preventDefault();
+
+      if (field === "productCode" && displayIndex === 0 && isRowEmpty(row)) {
+        $orderPhase.set("CHECK_RECEIPT_NUMBER");
+        focusReceiptInput();
+        return;
+      }
+
+      updateOrderRows((previousRows) => {
+        const index = previousRows.findIndex((candidate) => candidate.id === row.id);
+        if (index === -1) {
+          return previousRows;
+        }
+
+        const clearedRows = previousRows.map((candidate, idx) =>
+          idx === index ? { ...candidate, [field]: "" } : candidate,
         );
-        const allEmpty = updated.every((r) => r.productCode === "" && r.quantity === "");
+
+        const allEmpty = clearedRows.every(isRowEmpty);
         if (allEmpty) {
-          return updated[0] ? [updated[0]] : [];
-        } else {
-          return updated.filter((r, i) => i === 0 || r.productCode !== "" || r.quantity !== "");
+          const first = clearedRows[0] ?? createOrderRow();
+          return [first];
         }
+
+        return clearedRows.filter((candidate, idx) =>
+          idx === 0 || !isRowEmpty(candidate),
+        );
       });
-      // 前のセルにフォーカス（例: 個数→商品番号、商品番号→前行の個数）
+
       setTimeout(() => {
         if (field === "quantity") {
-          const input = rowRefs[rowIdx]?.productCode.current;
+          const input = rowRefs[displayIndex]?.productCode.current;
           input?.focus();
           input?.select();
-        } else if (field === "productCode" && rowIdx > 0) {
-          const input = rowRefs[rowIdx - 1]?.quantity.current;
+        } else if (field === "productCode" && displayIndex > 0) {
+          const input = rowRefs[displayIndex - 1]?.quantity.current;
           input?.focus();
           input?.select();
         }
       }, 0);
     }
   };
-
-  // 新しい行が追加されたときに自動でフォーカス
-  useEffect(() => {
-    if (pendingFocusRow != null && rowRefs[pendingFocusRow]?.productCode.current) {
-      rowRefs[pendingFocusRow]?.productCode.current.focus();
-      // eslint-disable-next-line react-hooks-extra/no-direct-set-state-in-use-effect
-      setPendingFocusRow(undefined);
-    }
-  }, [rowRefs, pendingFocusRow]);
 
   return (
     <p.table ref={tableRef} w="full">
@@ -154,23 +267,24 @@ export function OrderTable(): ReactElement {
         </p.tr>
       </Table.head>
       <Table.body>
-        {displayRows.map((row, idx) => (
+        {displayRows.map((row, index) => (
           <OrderTableRow
-            index={idx + 1}
+            disabled={!isActive}
+            index={index + 1}
             key={row.id}
             onChange={(field: KeyField, value: string) => {
               handleChange(row.id, field, value);
             }}
             onFocus={(field: KeyField) => {
-              handleFocus(idx, field);
+              handleFocus(row.id, field);
             }}
-            onKeyDown={(field: KeyField, e: React.KeyboardEvent<HTMLInputElement>) => {
-              handleKeyDown(idx, field, e);
+            onKeyDown={(field: KeyField, event: React.KeyboardEvent<HTMLInputElement>) => {
+              handleKeyDown(row, index, field, event);
             }}
             productCode={row.productCode}
-            productCodeRef={rowRefs[idx]?.productCode}
+            productCodeRef={rowRefs[index]?.productCode}
             quantity={row.quantity}
-            quantityRef={rowRefs[idx]?.quantity}
+            quantityRef={rowRefs[index]?.quantity}
           />
         ))}
       </Table.body>

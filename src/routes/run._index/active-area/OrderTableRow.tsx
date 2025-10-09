@@ -8,6 +8,7 @@ import { Table } from "@/components/atomic/Table";
 // const ItemQuantity = type("0 < string.numeric <= 100");
 
 type Props = {
+  disabled: boolean;
   index: number;
   productCode: string;
   quantity: string;
@@ -26,6 +27,7 @@ export function OrderTableRow(props: Props): ReactElement {
         <HStack gap="2" justifyContent="flex-end" w="full">
           <p.code color="gray.500">T</p.code>
           <NumberInput
+            disabled={props.disabled}
             onChange={(e: ChangeEvent<HTMLInputElement>) => {
               props.onChange("productCode", e.target.value);
             }}
@@ -54,6 +56,7 @@ export function OrderTableRow(props: Props): ReactElement {
           <p.p fontFamily="sans">×</p.p>
           <NumberInput
             color="black"
+            disabled={props.disabled}
             onChange={(e: ChangeEvent<HTMLInputElement>) => {
               props.onChange("quantity", e.target.value);
             }}

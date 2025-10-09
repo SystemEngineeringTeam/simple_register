@@ -56,9 +56,9 @@ export function OrderQueue(): ReactElement {
             </p.tr>
           </Table.head>
           <Table.body>
-            {orders.map((order) => (
+            {orders.map((order, idx) => (
               <p.tr
-                data-highlight-warn-once={order.status === "WAITING_COOKING"}
+                data-highlight-warn-once={orders.length - 1 === idx}
                 key={order.id}
                 style={{ backgroundColor: OrderStatusImpl(order.status).toColor().bg }}
               >

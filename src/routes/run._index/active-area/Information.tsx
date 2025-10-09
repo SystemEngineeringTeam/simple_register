@@ -1,9 +1,13 @@
 import type { ReactElement } from "react";
 import { useStore } from "@nanostores/react";
 import { Grid, HStack, styled as p, VStack } from "panda/jsx";
+import { useEffect, useRef } from "react";
 import { Expanded } from "@/components/atomic/Expanded";
 import { NumberInput } from "@/components/atomic/NumberInput";
+import { registerReceiptInput } from "@/lib/focus-manager";
+import { $currentOrder, setReceiptNumber } from "@/lib/stores/current-order";
 import { $items } from "@/lib/stores/items";
+import { $orderPhase } from "@/lib/stores/phase";
 import { PhaseIndicator } from "./PhaseIndicator";
 
 function ItemInfo(): ReactElement {
@@ -11,7 +15,6 @@ function ItemInfo(): ReactElement {
 
   return (
     <VStack alignItems="flex-start" p="2"w="full">
-      <p.p>商品情報</p.p>
       <Grid
         gridTemplateColumns="1fr 1fr 1fr"
         w="full"
@@ -67,6 +70,27 @@ function ItemInfo(): ReactElement {
 }
 
 export function Information(): ReactElement {
+  const order = useStore($currentOrder);
+  const orderPhase = useStore($orderPhase);
+  const receiptInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    registerReceiptInput(receiptInputRef.current);
+    return (): void => {
+      registerReceiptInput(null);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (orderPhase === "CHECK_RECEIPT_NUMBER") {
+      const input = receiptInputRef.current;
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    }
+  }, [orderPhase]);
+
   return (
     <Expanded display="flex" flexDir="column" justifyContent="space-between">
       <ItemInfo />
@@ -80,13 +104,40 @@ export function Information(): ReactElement {
             受付番号
           </p.p>
           <NumberInput
+            disabled={orderPhase !== "CHECK_RECEIPT_NUMBER"}
             h="10"
+            onChange={(event) => {
+              setReceiptNumber(event.target.value);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Backspace") {
+                event.preventDefault();
+                if (event.currentTarget.value !== "") {
+                  setReceiptNumber("");
+                }
+                requestAnimationFrame(() => {
+                  const input = receiptInputRef.current;
+                  input?.focus();
+                  input?.select();
+                });
+                return;
+              }
+
+              if (event.key === "Enter") {
+                event.preventDefault();
+                if (event.currentTarget.value.trim() === "")
+                  return;
+                $orderPhase.set("SELECT_ITEMS");
+              }
+            }}
             outline={{
               base: "2px solid",
               _focus: "4px solid",
             }}
             outlineColor="black"
+            ref={receiptInputRef}
             textAlign="center"
+            value={order.receiptNumber}
             w="10"
           />
         </HStack>
