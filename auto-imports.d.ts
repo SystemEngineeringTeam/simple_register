@@ -7,6 +7,7 @@
 export {}
 declare global {
   const IconMaterialSymbolsBucketCheck: typeof import('~icons/material-symbols/bucket-check.jsx')['default']
+  const IconMaterialSymbolsRestartAlt: typeof import('~icons/material-symbols/restart-alt.jsx')['default']
   const IconMaterialSymbolsSchedule: typeof import('~icons/material-symbols/schedule.jsx')['default']
   const IconMaterialSymbolsSync: typeof import('~icons/material-symbols/sync.jsx')['default']
 }

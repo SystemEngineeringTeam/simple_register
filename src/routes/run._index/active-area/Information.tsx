@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import { Expanded } from "@/components/atomic/Expanded";
 import { NumberInput } from "@/components/atomic/NumberInput";
 import { registerReceiptInput } from "@/lib/focus-manager";
+import { ReceiptNumberImpl } from "@/lib/order";
 import { $currentOrder, setReceiptNumber } from "@/lib/stores/current-order";
 import { $items } from "@/lib/stores/items";
 import { $orderPhase } from "@/lib/stores/phase";
@@ -107,13 +108,14 @@ export function Information(): ReactElement {
             disabled={orderPhase !== "CHECK_RECEIPT_NUMBER"}
             h="10"
             onChange={(event) => {
-              setReceiptNumber(event.target.value);
+              const receiptNumber = Number.parseInt(event.target.value, 10);
+              setReceiptNumber(receiptNumber);
             }}
             onKeyDown={(event) => {
               if (event.key === "Backspace") {
                 event.preventDefault();
                 if (event.currentTarget.value !== "") {
-                  setReceiptNumber("");
+                  setReceiptNumber(null);
                 }
                 requestAnimationFrame(() => {
                   const input = receiptInputRef.current;
@@ -137,7 +139,7 @@ export function Information(): ReactElement {
             outlineColor="black"
             ref={receiptInputRef}
             textAlign="center"
-            value={order.receiptNumber}
+            value={ReceiptNumberImpl(order.receiptNumber).toStr()}
             w="10"
           />
         </HStack>

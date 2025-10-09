@@ -1,3 +1,4 @@
+import type { Nullable } from "@/types/utils";
 import { atom } from "nanostores";
 
 export type OrderRowInput = {
@@ -7,7 +8,7 @@ export type OrderRowInput = {
 };
 
 export type CurrentOrderState = {
-  receiptNumber: string;
+  receiptNumber: Nullable<number>;
   discountCode: string;
   depositAmount: string;
   rows: OrderRowInput[];
@@ -23,7 +24,7 @@ export function createOrderRow(): OrderRowInput {
 
 function createInitialState(): CurrentOrderState {
   return {
-    receiptNumber: "",
+    receiptNumber: null,
     discountCode: "",
     depositAmount: "",
     rows: [createOrderRow()],
@@ -42,7 +43,7 @@ function ensureRows(rows: OrderRowInput[]): OrderRowInput[] {
   return rows;
 }
 
-export function setReceiptNumber(value: string): void {
+export function setReceiptNumber(value: CurrentOrderState["receiptNumber"]): void {
   updateState((previous) => ({
     ...previous,
     receiptNumber: value,

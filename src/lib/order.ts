@@ -1,6 +1,7 @@
 /* eslint-disable ts/explicit-function-return-type */
 
 import type { OrderStatus } from "@/types/order";
+import type { Nullable } from "@/types/utils";
 import { token } from "panda/tokens";
 import { match } from "ts-pattern";
 
@@ -33,6 +34,17 @@ export function OrderStatusImpl(status: OrderStatus) {
         onBg: token(`${key}.onBg`),
         text: token(`${key}.text`),
       };
+    },
+  };
+}
+
+export function ReceiptNumberImpl(receiptNumber: Nullable<number>) {
+  return {
+    toStr: () => {
+      if (receiptNumber == null) {
+        return "";
+      }
+      return receiptNumber.toString().padStart(2, "0");
     },
   };
 }
