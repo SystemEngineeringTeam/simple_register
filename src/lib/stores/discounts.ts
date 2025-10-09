@@ -1,10 +1,10 @@
 import { atom } from "nanostores";
-import { Discount } from "@/types/item";
+import { Discount, DiscountNumber } from "@/types/item";
 import DISCOUNTS from "~/data/discount.json";
 
 const DiscountWithNumber = Discount
   .merge({
-    discountNumber: "0 <= number <= 10",
+    discountNumber: DiscountNumber,
   });
 type DiscountWithNumber = typeof DiscountWithNumber.infer;
 

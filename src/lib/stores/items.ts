@@ -1,10 +1,10 @@
 import { atom } from "nanostores";
-import { Item, ItemGroup } from "@/types/item";
+import { ItemGroup, ItemWithItemNumber } from "@/types/item";
 import ITEM_GROUPS from "~/data/item_groups.json";
 
 const ItemGroupWithItemNumber = ItemGroup
   .merge({
-    children: Item.merge({ itemNumber: "0 <= number <= 100" }).array(),
+    children: ItemWithItemNumber.array(),
   });
 type ItemGroupWithItemNumber = typeof ItemGroupWithItemNumber.infer;
 

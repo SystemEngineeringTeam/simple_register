@@ -7,7 +7,7 @@ import { Expanded } from "@/components/atomic/Expanded";
 import { Table } from "@/components/atomic/Table";
 import { OrderStatusLabel } from "@/components/OrderStatusLabel";
 import { ItemImpl } from "@/lib/item";
-import { OrderStatusImpl } from "@/lib/order";
+import { OrderStatusImpl, ReceiptNumberImpl } from "@/lib/order";
 import { $orders } from "@/lib/stores/orders";
 import { dateToStr } from "@/lib/time";
 
@@ -65,7 +65,7 @@ export function OrderQueue(): ReactElement {
                 <p.td />
                 <Table.cell align="right">
                   <p.p bg="white" border="1px solid" ml="auto" mr="0" textAlign="center" w="[30px]">
-                    {order.receiptNumber}
+                    {ReceiptNumberImpl(order.receiptNumber).toStr()}
                   </p.p>
                 </Table.cell>
                 <p.td>

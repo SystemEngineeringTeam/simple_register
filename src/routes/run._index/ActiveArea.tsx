@@ -40,6 +40,7 @@ export function ActiveArea(): ReactElement {
   const progressIntervalRef = useRef<number | undefined>(undefined);
   const statusClearTimerRef = useRef<number | undefined>(undefined);
   const longPressTriggeredRef = useRef(false);
+  const resetCompletedRef = useRef(false);
   const startTimeRef = useRef<number>(0);
 
   useEffect(() => {
@@ -78,6 +79,7 @@ export function ActiveArea(): ReactElement {
         return;
       }
       longPressTriggeredRef.current = true;
+      resetCompletedRef.current = true;
       clearProgressInterval();
       resetCurrentOrder();
       $orderPhase.set("CHECK_RECEIPT_NUMBER");
@@ -87,6 +89,7 @@ export function ActiveArea(): ReactElement {
       $status.set({ type: "RESET", receiptNumber });
       statusClearTimerRef.current = window.setTimeout(() => {
         $status.set(null);
+        resetCompletedRef.current = false;
       }, 1000);
     };
 
@@ -135,7 +138,11 @@ export function ActiveArea(): ReactElement {
       longPressTriggeredRef.current = false;
       clearTimer();
       clearProgressInterval();
-      $status.set(null);
+
+      // リセットが完了している場合は、statusClearTimerに任せる（keyupでクリアしない）
+      if (!resetCompletedRef.current) {
+        $status.set(null);
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown, { capture: true });
@@ -148,6 +155,7 @@ export function ActiveArea(): ReactElement {
       clearProgressInterval();
       clearStatusTimer();
       longPressTriggeredRef.current = false;
+      resetCompletedRef.current = false;
       $status.set(null);
     };
   }, []);
@@ -161,7 +169,7 @@ export function ActiveArea(): ReactElement {
         },
       })}
       display="grid"
-      gridTemplateColumns="1fr 1fr 1fr"
+      gridTemplateColumns="4fr 4fr 3fr"
     >
       <LeftArea />
       <MiddleArea />

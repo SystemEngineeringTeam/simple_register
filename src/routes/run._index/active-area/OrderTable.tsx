@@ -6,6 +6,7 @@ import { styled as p } from "panda/jsx";
 import { createRef, useEffect, useMemo, useRef, useState } from "react";
 
 import { Table } from "@/components/atomic/Table";
+import { wrapValidation } from "@/lib/arktype";
 import {
   focusReceiptInput,
   registerOrderFocusHelpers,
@@ -14,9 +15,12 @@ import {
   $currentOrder,
   appendOrderRow,
   createOrderRow,
+  findDiscountByNumber,
+  findItemByNumber,
   updateOrderRows,
 } from "@/lib/stores/current-order";
 import { $orderPhase } from "@/lib/stores/phase";
+import { DiscountNumber, ItemNumber } from "@/types/item";
 import { OrderTableRow } from "./OrderTableRow";
 
 export type KeyField = "productCode" | "quantity";
@@ -35,9 +39,40 @@ function isRowEmpty(row: OrderRowInput): boolean {
 }
 
 export function OrderTable(): ReactElement {
-  const { rows } = useStore($currentOrder);
+  const currentOrder = useStore($currentOrder);
+  const { rows, discountCode } = currentOrder;
   const orderPhase = useStore($orderPhase);
   const isActive = orderPhase === "SELECT_ITEMS";
+
+  const discountInfo = useMemo(() => {
+    if (!discountCode || discountCode.trim() === "") {
+      return null;
+    }
+    const discountNumber = wrapValidation(
+      DiscountNumber(Number.parseInt(discountCode, 10)),
+    ).unwrapOr(null);
+    if (discountNumber == null) {
+      return null;
+    }
+    return findDiscountByNumber(discountNumber);
+  }, [discountCode]);
+
+  const getDiscountAmountForRow = useMemo(() => (productCode: string): number => {
+    if (!discountInfo || !productCode || productCode.trim() === "") {
+      return 0;
+    }
+    const itemNumber = wrapValidation(
+      ItemNumber(Number.parseInt(productCode, 10)),
+    ).unwrapOr(null);
+    if (itemNumber == null) {
+      return 0;
+    }
+    const item = findItemByNumber(itemNumber);
+    if (!item) {
+      return 0;
+    }
+    return discountInfo.amount[item.id] ?? 0;
+  }, [discountInfo]);
 
   const displayRows = useMemo<OrderRowInput[]>(() => {
     const nonEmptyRows = rows.filter((row) => !isRowEmpty(row));
@@ -251,25 +286,29 @@ export function OrderTable(): ReactElement {
   };
 
   return (
-    <p.table ref={tableRef} w="full">
+    <p.table fontSize="sm" ref={tableRef} w="full">
       <Table.head>
         <p.tr>
           <p.th w="10">#</p.th>
           <p.th w="20">商品番号</p.th>
           <p.th textAlign="left" w="stretch">商品名</p.th>
-          <p.th w="24">
+          <p.th w="20">
             価格&ensp;
             <p.span color="gray.500">[円]</p.span>
           </p.th>
-          <p.th w="20">個数</p.th>
-          <p.th w="20">割引額</p.th>
-          <p.th w="20">小計</p.th>
+          <p.th w="16">個数</p.th>
+          <p.th w="20">
+            割引&ensp;
+            <p.span color="gray.500">[円]</p.span>
+          </p.th>
+          <p.th w="16">小計</p.th>
         </p.tr>
       </Table.head>
       <Table.body>
         {displayRows.map((row, index) => (
           <OrderTableRow
             disabled={!isActive}
+            discountAmount={getDiscountAmountForRow(row.productCode) * Number.parseInt(row.quantity ?? "1", 10)}
             index={index + 1}
             key={row.id}
             onChange={(field: KeyField, value: string) => {

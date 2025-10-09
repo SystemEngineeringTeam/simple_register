@@ -1,5 +1,9 @@
+import type { DiscountNumber, Item, ItemNumber } from "@/types/item";
+import type { ReceiptNumber } from "@/types/order";
 import type { Nullable } from "@/types/utils";
 import { atom } from "nanostores";
+import { $discounts } from "./discounts";
+import { $items } from "./items";
 
 export type OrderRowInput = {
   id: number;
@@ -8,7 +12,8 @@ export type OrderRowInput = {
 };
 
 export type CurrentOrderState = {
-  receiptNumber: Nullable<number>;
+  orderId: Nullable<string>;
+  receiptNumber: Nullable<ReceiptNumber>;
   discountCode: string;
   depositAmount: string;
   rows: OrderRowInput[];
@@ -24,6 +29,7 @@ export function createOrderRow(): OrderRowInput {
 
 function createInitialState(): CurrentOrderState {
   return {
+    orderId: null,
     receiptNumber: null,
     discountCode: "",
     depositAmount: "",
@@ -41,6 +47,13 @@ function ensureRows(rows: OrderRowInput[]): OrderRowInput[] {
   if (rows.length === 0)
     return [createOrderRow()];
   return rows;
+}
+
+export function setOrderId(value: CurrentOrderState["orderId"]): void {
+  updateState((previous) => ({
+    ...previous,
+    orderId: value,
+  }));
 }
 
 export function setReceiptNumber(value: CurrentOrderState["receiptNumber"]): void {
@@ -81,4 +94,29 @@ export function resetCurrentOrder(): void {
 
 export function getFilledOrderRows(state: CurrentOrderState = $currentOrder.get()): OrderRowInput[] {
   return state.rows.filter((row) => row.productCode.trim() !== "" || row.quantity.trim() !== "");
+}
+
+export function findItemByNumber(itemNumber: ItemNumber): (typeof Item.infer & { itemNumber: ItemNumber }) | null {
+  const items = $items.get();
+  for (const group of items) {
+    for (const item of group.children) {
+      if (item.itemNumber === itemNumber) {
+        return item;
+      }
+    }
+  }
+  return null;
+}
+
+export function findDiscountByNumber(discountNumber: DiscountNumber): { id: string; name: string; amount: Record<string, number> } | null {
+  const discounts = $discounts.get();
+  const discount = discounts.find((d) => d.discountNumber === discountNumber);
+  if (discount == null) {
+    return null;
+  }
+  return {
+    id: discount.id,
+    name: discount.name,
+    amount: discount.amount ?? {},
+  };
 }

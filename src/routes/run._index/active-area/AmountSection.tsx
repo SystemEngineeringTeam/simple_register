@@ -1,19 +1,24 @@
 import type { ReactElement } from "react";
 import { useStore } from "@nanostores/react";
 import { HStack, styled as p, VStack } from "panda/jsx";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/atomic/Button";
 import { NumberInput } from "@/components/atomic/NumberInput";
 import { Table } from "@/components/atomic/Table";
+import { wrapValidation } from "@/lib/arktype";
 import { focusOrderLastRowProduct } from "@/lib/focus-manager";
 import {
   $currentOrder,
+  findDiscountByNumber,
+  findItemByNumber,
   getFilledOrderRows,
   resetCurrentOrder,
   setDepositAmount,
   setDiscountCode,
 } from "@/lib/stores/current-order";
+import { $orders } from "@/lib/stores/orders";
 import { $orderPhase } from "@/lib/stores/phase";
+import { DiscountNumber, ItemNumber } from "@/types/item";
 
 const TableBodyRow = p("tr", {
   base: {
@@ -37,6 +42,51 @@ export function AmountSection(): ReactElement {
 
   type RightStep = "DISCOUNT" | "DEPOSIT" | "CONFIRM";
   const [rightStep, setRightStep] = useState<RightStep>("DISCOUNT");
+
+  // 合計金額と割引額の計算
+  const { totalDiscount, total } = useMemo(() => {
+    const filledRows = getFilledOrderRows(order);
+    let subtotalAmount = 0;
+    let totalDiscountAmount = 0;
+
+    const discountNumber = wrapValidation(
+      DiscountNumber(Number.parseInt(order.discountCode, 10)),
+    ).unwrapOr(null);
+    const discountInfo = discountNumber != null
+      ? findDiscountByNumber(discountNumber)
+      : null;
+
+    for (const row of filledRows) {
+      const itemNumber = wrapValidation(
+        ItemNumber(Number.parseInt(row.productCode, 10)),
+      ).unwrapOr(null);
+      if (itemNumber == null)
+        continue;
+
+      const item = findItemByNumber(itemNumber);
+      if (!item)
+        continue;
+
+      const quantity = Number.parseInt(row.quantity || "1", 10);
+      subtotalAmount += item.price * quantity;
+
+      if (discountInfo) {
+        const discountAmount = discountInfo.amount[item.id] ?? 0;
+        totalDiscountAmount += discountAmount * quantity;
+      }
+    }
+
+    return {
+      subtotal: subtotalAmount,
+      totalDiscount: totalDiscountAmount,
+      total: subtotalAmount - totalDiscountAmount,
+    };
+  }, [order]);
+
+  const change = useMemo(() => {
+    const depositNumber = Number.parseInt(order.depositAmount || "0", 10);
+    return Math.max(0, depositNumber - total);
+  }, [order.depositAmount, total]);
 
   const discountInputRef = useRef<HTMLInputElement>(null);
   const depositInputRef = useRef<HTMLInputElement>(null);
@@ -84,20 +134,76 @@ export function AmountSection(): ReactElement {
   }, [rightStep]);
 
   const handleConfirm = (): void => {
-    const snapshot = {
+    const now = new Date().toISOString();
+    const filledRows = getFilledOrderRows(order);
+
+    // 注文アイテムを構築
+    type OrderItem = { id: string; name: string; price: number; amount: number };
+    const orderItems: OrderItem[] = [];
+    for (const row of filledRows) {
+      const itemNumber = wrapValidation(
+        ItemNumber(Number.parseInt(row.productCode, 10)),
+      ).unwrapOr(null);
+      if (itemNumber == null)
+        continue;
+
+      const item = findItemByNumber(itemNumber);
+      if (!item)
+        continue;
+
+      const quantity = Number.parseInt(row.quantity || "1", 10);
+      orderItems.push({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        amount: quantity,
+      });
+    }
+
+    // 既存の注文を更新（UNCONFIRMED → WAITING_COOKING）
+    const currentOrders = $orders.get();
+    const orderId = order.orderId;
+
+    if (orderId != null) {
+      const existingOrderIndex = currentOrders.findIndex(
+        (o) => o.id === orderId,
+      );
+
+      if (existingOrderIndex !== -1) {
+        const updatedOrders = [...currentOrders];
+        const existingOrder = updatedOrders[existingOrderIndex]!;
+
+        // 既存の注文が UNCONFIRMED でない場合は更新しない
+        if (existingOrder.status !== "UNCONFIRMED") {
+          console.warn("[ORDER_CONFIRMATION] Order is not UNCONFIRMED", { orderId, status: existingOrder.status });
+          return;
+        }
+
+        updatedOrders[existingOrderIndex] = {
+          ...existingOrder,
+          status: "WAITING_COOKING",
+          items: orderItems as typeof existingOrder.items,
+          statusChange: [
+            ...existingOrder.statusChange,
+            {
+              to: "WAITING_COOKING",
+              at: now,
+            },
+          ],
+        };
+        $orders.set(updatedOrders);
+      }
+    } // eslint-disable-next-line no-console
+    console.log("[ORDER_CONFIRMATION]", {
       receiptNumber: order.receiptNumber,
       discountCode: order.discountCode,
       depositAmount: order.depositAmount,
-      items: getFilledOrderRows(order).map((item) => ({
-        id: item.id,
-        productCode: item.productCode,
-        quantity: Number.parseInt(item.quantity || "0", 10) || 0,
-      })),
-      confirmedAt: new Date().toISOString(),
-    };
-
-    // eslint-disable-next-line no-console
-    console.log("[ORDER_CONFIRMATION]", snapshot);
+      items: orderItems,
+      confirmedAt: now,
+      total,
+      totalDiscount,
+      change,
+    });
 
     resetCurrentOrder();
     $orderPhase.set("CHECK_RECEIPT_NUMBER");
@@ -110,7 +216,7 @@ export function AmountSection(): ReactElement {
       <p.table w="100%">
         <Table.head>
           <p.tr>
-            <p.th p="0!" w="40"></p.th>
+            <p.th p="0!" w="24"></p.th>
             <p.th p="0!" w="stretch"></p.th>
           </p.tr>
         </Table.head>
@@ -121,7 +227,7 @@ export function AmountSection(): ReactElement {
             </Table.cell>
             <Table.cell textAlign="right">
               <HStack gap="2" justifyContent="flex-end">
-                <p.code fontSize="2xl">10</p.code>
+                <p.code fontSize="2xl">{total}</p.code>
                 <p.p>円</p.p>
               </HStack>
             </Table.cell>
@@ -187,7 +293,7 @@ export function AmountSection(): ReactElement {
                   fontSize="2xl"
                   w="32"
                 >
-                  -10
+                  {totalDiscount > 0 ? `-${totalDiscount}` : "0"}
                 </p.code>
                 <p.p>円</p.p>
               </HStack>
@@ -253,7 +359,7 @@ export function AmountSection(): ReactElement {
             </Table.cell>
             <Table.cell textAlign="right">
               <HStack gap="2" justifyContent="flex-end">
-                <p.code fontSize="2xl">10</p.code>
+                <p.code fontSize="2xl">{change}</p.code>
                 <p.p>円</p.p>
               </HStack>
             </Table.cell>

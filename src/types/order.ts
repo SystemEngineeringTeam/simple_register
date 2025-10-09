@@ -1,10 +1,10 @@
 import { type } from "arktype";
 import { Item } from "./item";
 
-export const OrderNumber = type("0 <= number.integer <= 1000");
+export const OrderNumber = type("0 <= number.integer#orderNumber <= 9999");
 export type OrderNumber = typeof OrderNumber.infer;
 
-export const ReceiptNumber = type("0 <= number.integer <= 50");
+export const ReceiptNumber = type("0 <= number.integer#receiptNumber <= 50");
 export type ReceiptNumber = typeof ReceiptNumber.infer;
 
 export const OrderStatus = type(

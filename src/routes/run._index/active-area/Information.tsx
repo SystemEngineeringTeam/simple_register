@@ -1,14 +1,18 @@
 import type { ReactElement } from "react";
 import { useStore } from "@nanostores/react";
+import { createId } from "@paralleldrive/cuid2";
+import { type } from "arktype";
 import { Grid, HStack, styled as p, VStack } from "panda/jsx";
 import { useEffect, useRef } from "react";
 import { Expanded } from "@/components/atomic/Expanded";
 import { NumberInput } from "@/components/atomic/NumberInput";
 import { registerReceiptInput } from "@/lib/focus-manager";
 import { ReceiptNumberImpl } from "@/lib/order";
-import { $currentOrder, setReceiptNumber } from "@/lib/stores/current-order";
+import { $currentOrder, setOrderId, setReceiptNumber } from "@/lib/stores/current-order";
 import { $items } from "@/lib/stores/items";
+import { $orders } from "@/lib/stores/orders";
 import { $orderPhase } from "@/lib/stores/phase";
+import { Order, ReceiptNumber } from "@/types/order";
 import { PhaseIndicator } from "./PhaseIndicator";
 
 function ItemInfo(): ReactElement {
@@ -109,7 +113,16 @@ export function Information(): ReactElement {
             h="10"
             onChange={(event) => {
               const receiptNumber = Number.parseInt(event.target.value, 10);
-              setReceiptNumber(receiptNumber);
+              if (Number.isNaN(receiptNumber)) {
+                setReceiptNumber(null);
+              } else {
+                const validated = ReceiptNumber(receiptNumber);
+                if (validated instanceof type.errors) {
+                  setReceiptNumber(null);
+                } else {
+                  setReceiptNumber(validated);
+                }
+              }
             }}
             onKeyDown={(event) => {
               if (event.key === "Backspace") {
@@ -127,8 +140,42 @@ export function Information(): ReactElement {
 
               if (event.key === "Enter") {
                 event.preventDefault();
-                if (event.currentTarget.value.trim() === "")
+                const receiptValue = event.currentTarget.value.trim();
+                if (receiptValue === "")
                   return;
+
+                const receiptNumber = Number.parseInt(receiptValue, 10);
+                if (Number.isNaN(receiptNumber))
+                  return;
+
+                // UNCONFIRMED ステータスで注文を作成
+                const now = new Date().toISOString();
+                const orderId = createId();
+
+                const validatedReceiptNumber = ReceiptNumber(receiptNumber);
+                if (validatedReceiptNumber instanceof type.errors)
+                  return;
+
+                const newOrder: Order = {
+                  id: Order.get("id").from(orderId),
+                  receiptNumber: validatedReceiptNumber,
+                  createdAt: now,
+                  status: "UNCONFIRMED",
+                  statusChange: [
+                    {
+                      to: "UNCONFIRMED",
+                      at: now,
+                    },
+                  ],
+                  items: [],
+                };
+
+                $orders.set([...$orders.get(), newOrder]);
+
+                // currentOrder に orderId と receiptNumber を保存
+                setOrderId(orderId);
+                setReceiptNumber(validatedReceiptNumber);
+
                 $orderPhase.set("SELECT_ITEMS");
               }
             }}
