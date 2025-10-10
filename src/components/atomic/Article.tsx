@@ -3,7 +3,7 @@ import { styled as p } from "panda/jsx";
 
 export const cvaArticle = cva({
   base: {
-    "w": "100%",
+    "w": "full",
     "display": "flex",
     "flexDir": "column",
     "gap": "3",

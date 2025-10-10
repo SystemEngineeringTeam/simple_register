@@ -6,7 +6,7 @@ export const cvaContent = cva({
     "display": "flex",
     "flexDirection": "column",
     "gap": "3",
-    "w": "100%",
+    "w": "full",
 
     "& ol, & ul": {},
     "& h2": {
@@ -76,8 +76,8 @@ export const cvaContent = cva({
       height: "100px",
     },
     "& figure": {
-      "width": "100%",
-      "maxWidth": "100%",
+      "width": "full",
+      "maxWidth": "full",
       "mdDown": {
         p: "0",
         py: "3",

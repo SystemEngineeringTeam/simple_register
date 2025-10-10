@@ -3,14 +3,14 @@ import { styled as p } from "panda/jsx";
 
 export const cvaExpanded = cva({
   base: {
-    w: "100%",
-    h: "100%",
+    w: "full",
+    h: "full",
   },
   variants: {
     basedOn: {
       container: {
-        w: "100%",
-        h: "100%",
+        w: "full",
+        h: "full",
       },
       restOfHeader: {
         h: { base: "calc(100vh - 4rem)", lg: "calc(100vh - 5rem)" },

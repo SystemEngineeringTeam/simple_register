@@ -214,8 +214,8 @@ export function AmountSection(): ReactElement {
   };
 
   return (
-    <VStack alignItems="flex-start" gap="4" w="100%">
-      <p.table w="100%">
+    <VStack alignItems="flex-start" gap="4" w="full">
+      <p.table w="full">
         <Table.head>
           <p.tr>
             <p.th p="0!" w="24"></p.th>

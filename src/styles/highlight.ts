@@ -28,7 +28,7 @@ export const highlightKeyframes = defineKeyframes({
     "0%": {
       background: "highlight.bg",
     },
-    "100%": {
+    "full": {
       background: "transparent",
     },
   },

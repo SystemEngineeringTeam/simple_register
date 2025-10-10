@@ -7,7 +7,7 @@ export const cvaCard = cva({
     borderColor: "neutral.500",
     p: "2",
     rounded: "lg",
-    w: "100%",
+    w: "full",
   },
   variants: {
     centralized: {

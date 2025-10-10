@@ -29,7 +29,7 @@ export default function (): ReactElement {
         `}
         gridTemplateColumns="2fr 3fr"
         gridTemplateRows="1fr 1fr 1fr 1fr 1fr auto"
-        h="100%"
+        h="full"
       >
         <p.div gridArea="basic-info"><BasicInfo /></p.div>
         <p.div gridArea="pickup-monitor"><PickupMonitor /></p.div>
