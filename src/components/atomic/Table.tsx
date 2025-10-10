@@ -52,10 +52,11 @@ export const Table = {
 
   ItemNumber: p("div", {
     base: {
-      color: "gray.600",
+      color: "gray.500",
       fontSize: "sm",
+      fontFamily: "mono",
       textAlign: "center",
-      w: "16",
+      w: "[40px]",
     },
   }),
 

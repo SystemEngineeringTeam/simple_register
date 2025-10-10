@@ -6,7 +6,6 @@ export const cvaButton = cva({
     colorPalette: "primary",
     py: "2",
     px: "4",
-    rounded: "md",
     cursor: "pointer",
     _disabled: {
       cursor: "not-allowed",
@@ -37,7 +36,7 @@ export const cvaButton = cva({
         _enabled: { _hover: { bg: "colorPalette/5" } },
       },
       text: {
-        // eslint-disable-next-line @pandacss/no-hardcoded-color
+
         bg: "transparent",
         color: "colorPalette",
         _enabled: { _hover: { bg: "colorPalette/10" } },

@@ -112,7 +112,7 @@ export function StatusBar(): ReactElement {
           <IconMaterialSymbolsSync />
           <p.p>保存中...</p.p>
         </HStack>
-        <HStack bg="green.600" color="white" gap="1" h="full" px="2">
+        <HStack bg="purple.500" color="white" gap="1" h="full" px="2">
           <HStack fontWeight="bold" gap="1">
             <InlineReceiptNumber>
               10

@@ -9,9 +9,12 @@ import { wrapValidation } from "@/lib/arktype";
 import { focusOrderLastRowProduct } from "@/lib/focus-manager";
 import {
   $currentOrder,
+  $depositAmount,
+  $discountCode,
+  $filledOrderRows,
   findDiscountByNumber,
   findItemByNumber,
-  getFilledOrderRows,
+  getNormalizedCurrentOrderItems,
   resetCurrentOrder,
   setDepositAmount,
   setDiscountCode,
@@ -19,6 +22,7 @@ import {
 import { $orders } from "@/lib/stores/orders";
 import { $orderPhase } from "@/lib/stores/phase";
 import { DiscountNumber, ItemNumber } from "@/types/item";
+import { Order } from "@/types/order";
 
 const TableBodyRow = p("tr", {
   base: {
@@ -37,7 +41,13 @@ const TableBodyRow = p("tr", {
 });
 
 export function AmountSection(): ReactElement {
-  const order = useStore($currentOrder);
+  const currentOrder = useStore($currentOrder);
+  const orderId = currentOrder.orderId;
+  const receiptNumber = currentOrder.receiptNumber;
+  const createdAt = currentOrder.createdAt;
+  const discountCode = useStore($discountCode);
+  const depositAmount = useStore($depositAmount);
+  const filledRows = useStore($filledOrderRows);
   const orderPhase = useStore($orderPhase);
 
   type RightStep = "DISCOUNT" | "DEPOSIT" | "CONFIRM";
@@ -45,12 +55,11 @@ export function AmountSection(): ReactElement {
 
   // 合計金額と割引額の計算
   const { totalDiscount, total } = useMemo(() => {
-    const filledRows = getFilledOrderRows(order);
     let subtotalAmount = 0;
     let totalDiscountAmount = 0;
 
     const discountNumber = wrapValidation(
-      DiscountNumber(Number.parseInt(order.discountCode, 10)),
+      DiscountNumber(Number.parseInt(discountCode, 10)),
     ).unwrapOr(null);
     const discountInfo = discountNumber != null
       ? findDiscountByNumber(discountNumber)
@@ -81,12 +90,12 @@ export function AmountSection(): ReactElement {
       totalDiscount: totalDiscountAmount,
       total: subtotalAmount - totalDiscountAmount,
     };
-  }, [order]);
+  }, [filledRows, discountCode]);
 
   const change = useMemo(() => {
-    const depositNumber = Number.parseInt(order.depositAmount || "0", 10);
+    const depositNumber = Number.parseInt(depositAmount || "0", 10);
     return Math.max(0, depositNumber - total);
-  }, [order.depositAmount, total]);
+  }, [depositAmount, total]);
 
   const discountInputRef = useRef<HTMLInputElement>(null);
   const depositInputRef = useRef<HTMLInputElement>(null);
@@ -135,69 +144,44 @@ export function AmountSection(): ReactElement {
 
   const handleConfirm = (): void => {
     const now = new Date().toISOString();
-    const filledRows = getFilledOrderRows(order);
 
-    // 注文アイテムを構築
-    type OrderItem = { id: string; name: string; price: number; amount: number };
-    const orderItems: OrderItem[] = [];
-    for (const row of filledRows) {
-      const itemNumber = wrapValidation(
-        ItemNumber(Number.parseInt(row.productCode, 10)),
-      ).unwrapOr(null);
-      if (itemNumber == null)
-        continue;
+    // 注文アイテムを構築（正規化済み: 同じ商品をまとめる）
+    const normalizedItems = getNormalizedCurrentOrderItems(filledRows);
+    const orderItems: Array<Order["items"][number]> = normalizedItems.map((item) => ({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      amount: item.amount,
+    }));
 
-      const item = findItemByNumber(itemNumber);
-      if (!item)
-        continue;
+    // 新しい注文を作成して $orders に追加
+    if (orderId != null && receiptNumber != null && createdAt != null) {
+      const currentOrders = $orders.get();
 
-      const quantity = Number.parseInt(row.quantity || "1", 10);
-      orderItems.push({
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        amount: quantity,
-      });
-    }
+      const newOrder: Order = {
+        id: Order.get("id").from(orderId),
+        receiptNumber,
+        createdAt, // 受付番号発行時刻（Information.tsx で記録済み）
+        status: "WAITING_COOKING",
+        statusChange: [
+          {
+            to: "UNCONFIRMED",
+            at: createdAt, // 受付番号発行時刻
+          },
+          {
+            to: "WAITING_COOKING",
+            at: now, // 注文確定時刻
+          },
+        ],
+        items: orderItems as Array<typeof orderItems[number]>,
+      };
 
-    // 既存の注文を更新（UNCONFIRMED → WAITING_COOKING）
-    const currentOrders = $orders.get();
-    const orderId = order.orderId;
-
-    if (orderId != null) {
-      const existingOrderIndex = currentOrders.findIndex(
-        (o) => o.id === orderId,
-      );
-
-      if (existingOrderIndex !== -1) {
-        const updatedOrders = [...currentOrders];
-        const existingOrder = updatedOrders[existingOrderIndex]!;
-
-        // 既存の注文が UNCONFIRMED でない場合は更新しない
-        if (existingOrder.status !== "UNCONFIRMED") {
-          console.warn("[ORDER_CONFIRMATION] Order is not UNCONFIRMED", { orderId, status: existingOrder.status });
-          return;
-        }
-
-        updatedOrders[existingOrderIndex] = {
-          ...existingOrder,
-          status: "WAITING_COOKING",
-          items: orderItems as typeof existingOrder.items,
-          statusChange: [
-            ...existingOrder.statusChange,
-            {
-              to: "WAITING_COOKING",
-              at: now,
-            },
-          ],
-        };
-        $orders.set(updatedOrders);
-      }
+      $orders.set([...currentOrders, newOrder]);
     } // eslint-disable-next-line no-console
     console.log("[ORDER_CONFIRMATION]", {
-      receiptNumber: order.receiptNumber,
-      discountCode: order.discountCode,
-      depositAmount: order.depositAmount,
+      receiptNumber,
+      discountCode,
+      depositAmount,
       items: orderItems,
       confirmedAt: now,
       total,
@@ -282,7 +266,7 @@ export function AmountSection(): ReactElement {
                       outlineColor="black"
                       ref={discountInputRef}
                       textAlign="center"
-                      value={order.discountCode}
+                      value={discountCode}
                       w="10"
                     />
                   </HStack>
@@ -346,7 +330,7 @@ export function AmountSection(): ReactElement {
                   }}
                   ref={depositInputRef}
                   textAlign="right"
-                  value={order.depositAmount}
+                  value={depositAmount}
                   w="32"
                 />
                 <p.p>円</p.p>
@@ -367,8 +351,12 @@ export function AmountSection(): ReactElement {
         </Table.body>
       </p.table>
       <Button
-        animateOnHover
+        _focus={{
+          bg: "purple.500",
+          color: "white",
+        }}
         disabled={rightStep !== "CONFIRM"}
+        mx="auto"
         onBlur={() => {
           dotPressedRef.current = false;
         }}
@@ -402,7 +390,6 @@ export function AmountSection(): ReactElement {
         }}
         ref={confirmButtonRef}
         variant="filled"
-        w="full"
       >
         注文確定 (. + Enter)
       </Button>

@@ -12,7 +12,8 @@ import {
   registerOrderFocusHelpers,
 } from "@/lib/focus-manager";
 import {
-  $currentOrder,
+  $discountCode,
+  $orderRows,
   appendOrderRow,
   createOrderRow,
   findDiscountByNumber,
@@ -39,8 +40,8 @@ function isRowEmpty(row: OrderRowInput): boolean {
 }
 
 export function OrderTable(): ReactElement {
-  const currentOrder = useStore($currentOrder);
-  const { rows, discountCode } = currentOrder;
+  const rows = useStore($orderRows);
+  const discountCode = useStore($discountCode);
   const orderPhase = useStore($orderPhase);
   const isActive = orderPhase === "SELECT_ITEMS";
 
@@ -292,10 +293,7 @@ export function OrderTable(): ReactElement {
           <p.th w="10">#</p.th>
           <p.th w="20">商品番号</p.th>
           <p.th textAlign="left" w="stretch">商品名</p.th>
-          <p.th w="20">
-            価格&ensp;
-            <p.span color="gray.500">[円]</p.span>
-          </p.th>
+          <p.th w="12" />
           <p.th w="16">個数</p.th>
           <p.th w="20">
             割引&ensp;

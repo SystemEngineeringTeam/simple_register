@@ -1,7 +1,10 @@
 import type { DiscountNumber, Item, ItemNumber } from "@/types/item";
-import type { ReceiptNumber } from "@/types/order";
+import type { OrderItemAmount as OrderItemAmountType, ReceiptNumber } from "@/types/order";
 import type { Nullable } from "@/types/utils";
-import { atom } from "nanostores";
+import { atom, computed } from "nanostores";
+import { wrapValidation } from "@/lib/arktype";
+import { ItemNumber as ItemNumberType } from "@/types/item";
+import { OrderItemAmount } from "@/types/order";
 import { $discounts } from "./discounts";
 import { $items } from "./items";
 
@@ -14,9 +17,7 @@ export type OrderRowInput = {
 export type CurrentOrderState = {
   orderId: Nullable<string>;
   receiptNumber: Nullable<ReceiptNumber>;
-  discountCode: string;
-  depositAmount: string;
-  rows: OrderRowInput[];
+  createdAt: Nullable<string>; // 受付番号発行時刻（ISO形式）
 };
 
 export function createOrderRow(): OrderRowInput {
@@ -31,13 +32,18 @@ function createInitialState(): CurrentOrderState {
   return {
     orderId: null,
     receiptNumber: null,
-    discountCode: "",
-    depositAmount: "",
-    rows: [createOrderRow()],
+    createdAt: null,
   };
 }
 
+function createInitialRows(): OrderRowInput[] {
+  return [createOrderRow()];
+}
+
 export const $currentOrder = atom<CurrentOrderState>(createInitialState());
+export const $orderRows = atom<OrderRowInput[]>(createInitialRows());
+export const $discountCode = atom<string>("");
+export const $depositAmount = atom<string>("");
 
 function updateState(updater: (previous: CurrentOrderState) => CurrentOrderState): void {
   $currentOrder.set(updater($currentOrder.get()));
@@ -63,25 +69,23 @@ export function setReceiptNumber(value: CurrentOrderState["receiptNumber"]): voi
   }));
 }
 
-export function setDiscountCode(value: string): void {
+export function setCreatedAt(value: CurrentOrderState["createdAt"]): void {
   updateState((previous) => ({
     ...previous,
-    discountCode: value,
+    createdAt: value,
   }));
+}
+
+export function setDiscountCode(value: string): void {
+  $discountCode.set(value);
 }
 
 export function setDepositAmount(value: string): void {
-  updateState((previous) => ({
-    ...previous,
-    depositAmount: value,
-  }));
+  $depositAmount.set(value);
 }
 
 export function updateOrderRows(mutator: (rows: OrderRowInput[]) => OrderRowInput[]): void {
-  updateState((previous) => ({
-    ...previous,
-    rows: ensureRows(mutator(previous.rows)),
-  }));
+  $orderRows.set(ensureRows(mutator($orderRows.get())));
 }
 
 export function appendOrderRow(): void {
@@ -90,10 +94,13 @@ export function appendOrderRow(): void {
 
 export function resetCurrentOrder(): void {
   $currentOrder.set(createInitialState());
+  $orderRows.set(createInitialRows());
+  $discountCode.set("");
+  $depositAmount.set("");
 }
 
-export function getFilledOrderRows(state: CurrentOrderState = $currentOrder.get()): OrderRowInput[] {
-  return state.rows.filter((row) => row.productCode.trim() !== "" || row.quantity.trim() !== "");
+export function getFilledOrderRows(rows: OrderRowInput[] = $orderRows.get()): OrderRowInput[] {
+  return rows.filter((row) => row.productCode.trim() !== "" || row.quantity.trim() !== "");
 }
 
 export function findItemByNumber(itemNumber: ItemNumber): (typeof Item.infer & { itemNumber: ItemNumber }) | null {
@@ -120,3 +127,72 @@ export function findDiscountByNumber(discountNumber: DiscountNumber): { id: stri
     amount: discount.amount ?? {},
   };
 }
+
+/**
+ * 注文前の商品を正規化（同じ商品をまとめる）して返す
+ */
+export function getNormalizedCurrentOrderItems(
+  rows: OrderRowInput[] = $orderRows.get(),
+): Array<typeof Item.infer & { amount: OrderItemAmountType; itemNumber: ItemNumber }> {
+  const filledRows = rows.filter(
+    (row) => row.productCode.trim() !== "" && row.quantity.trim() !== "",
+  );
+
+  // itemIdごとに数量を集計
+  const itemMap = new Map<string, { item: typeof Item.infer & { itemNumber: ItemNumber }; totalAmount: number }>();
+
+  for (const row of filledRows) {
+    const itemNumberResult = wrapValidation(
+      ItemNumberType(Number.parseInt(row.productCode, 10)),
+    );
+    if (itemNumberResult.isErr())
+      continue;
+
+    const itemNumber = itemNumberResult.value;
+    const item = findItemByNumber(itemNumber);
+    if (!item)
+      continue;
+
+    const quantityResult = wrapValidation(
+      OrderItemAmount(Number.parseInt(row.quantity, 10)),
+    );
+    if (quantityResult.isErr())
+      continue;
+
+    const quantity = Number(quantityResult.value);
+
+    const existing = itemMap.get(item.id);
+    if (existing) {
+      existing.totalAmount += quantity;
+    } else {
+      itemMap.set(item.id, { item, totalAmount: quantity });
+    }
+  }
+
+  const normalizedItems: Array<typeof Item.infer & { amount: OrderItemAmountType; itemNumber: ItemNumber }> = [];
+
+  for (const { item, totalAmount } of itemMap.values()) {
+    const amountResult = wrapValidation(OrderItemAmount(totalAmount));
+    if (amountResult.isErr()) {
+      continue;
+    }
+
+    normalizedItems.push({
+      ...item,
+      amount: amountResult.value,
+    });
+  }
+
+  return normalizedItems;
+}
+
+// Computed atoms for performance optimization
+export const $normalizedCurrentOrderItems = computed(
+  [$orderRows],
+  (rows) => getNormalizedCurrentOrderItems(rows),
+);
+
+export const $filledOrderRows = computed(
+  [$orderRows],
+  (rows) => getFilledOrderRows(rows),
+);

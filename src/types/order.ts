@@ -7,6 +7,9 @@ export type OrderNumber = typeof OrderNumber.infer;
 export const ReceiptNumber = type("0 <= number.integer#receiptNumber <= 50");
 export type ReceiptNumber = typeof ReceiptNumber.infer;
 
+export const OrderItemAmount = type("0 <= number.integer#orderItemAmount <= 100");
+export type OrderItemAmount = typeof OrderItemAmount.infer;
+
 export const OrderStatus = type(
   "'UNCONFIRMED' | 'WAITING_COOKING' | 'WAITING_PICKUP' | 'PICKED_UP' | 'REFUNDED' | 'CANCELED'",
 );
@@ -21,6 +24,6 @@ export const Order = type({
     to: OrderStatus,
     at: "string.date.iso",
   }).array(),
-  items: Item.merge({ amount: "0 <= number.integer <= 100" }).array(),
+  items: Item.merge({ amount: OrderItemAmount }).array(),
 });
 export type Order = typeof Order.infer;

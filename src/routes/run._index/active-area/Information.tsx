@@ -3,19 +3,18 @@ import { useStore } from "@nanostores/react";
 import { createId } from "@paralleldrive/cuid2";
 import { type } from "arktype";
 import { Grid, HStack, styled as p, VStack } from "panda/jsx";
-import { useEffect, useRef } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { Expanded } from "@/components/atomic/Expanded";
 import { NumberInput } from "@/components/atomic/NumberInput";
 import { registerReceiptInput } from "@/lib/focus-manager";
-import { ReceiptNumberImpl } from "@/lib/order";
-import { $currentOrder, setOrderId, setReceiptNumber } from "@/lib/stores/current-order";
+import { setCreatedAt, setOrderId, setReceiptNumber } from "@/lib/stores/current-order";
 import { $items } from "@/lib/stores/items";
 import { $orders } from "@/lib/stores/orders";
 import { $orderPhase } from "@/lib/stores/phase";
-import { Order, ReceiptNumber } from "@/types/order";
+import { ReceiptNumber } from "@/types/order";
 import { PhaseIndicator } from "./PhaseIndicator";
 
-function ItemInfo(): ReactElement {
+const ItemInfo = memo((): ReactElement => {
   const item = useStore($items);
 
   return (
@@ -72,12 +71,23 @@ function ItemInfo(): ReactElement {
       </Grid>
     </VStack>
   );
-}
+});
 
 export function Information(): ReactElement {
-  const order = useStore($currentOrder);
+  const orders = useStore($orders);
   const orderPhase = useStore($orderPhase);
   const receiptInputRef = useRef<HTMLInputElement>(null);
+
+  // 前回の受付番号+1を提案値として計算
+  const suggestedReceiptNumber = useMemo(() => {
+    const lastOrder = orders.at(-1);
+    return (lastOrder?.receiptNumber ?? 0) + 1;
+  }, [orders]);
+
+  // ローカル状態で受付番号を管理
+  const [localReceiptNumber, setLocalReceiptNumber] = useState<number>(() => suggestedReceiptNumber);
+  const prevPhaseRef = useRef<typeof orderPhase>(orderPhase);
+  const prevSuggestedRef = useRef<number>(suggestedReceiptNumber);
 
   useEffect(() => {
     registerReceiptInput(receiptInputRef.current);
@@ -86,6 +96,17 @@ export function Information(): ReactElement {
     };
   }, []);
 
+  // フェーズが CHECK_RECEIPT_NUMBER に変わったとき、または提案値が変わったときの処理
+  if (orderPhase === "CHECK_RECEIPT_NUMBER" && prevPhaseRef.current !== "CHECK_RECEIPT_NUMBER") {
+    setLocalReceiptNumber(suggestedReceiptNumber);
+    prevSuggestedRef.current = suggestedReceiptNumber;
+  } else if (orderPhase === "CHECK_RECEIPT_NUMBER" && prevSuggestedRef.current !== suggestedReceiptNumber) {
+    setLocalReceiptNumber(suggestedReceiptNumber);
+    prevSuggestedRef.current = suggestedReceiptNumber;
+  }
+  prevPhaseRef.current = orderPhase;
+
+  // フォーカス処理
   useEffect(() => {
     if (orderPhase === "CHECK_RECEIPT_NUMBER") {
       const input = receiptInputRef.current;
@@ -112,15 +133,13 @@ export function Information(): ReactElement {
             disabled={orderPhase !== "CHECK_RECEIPT_NUMBER"}
             h="10"
             onChange={(event) => {
-              const receiptNumber = Number.parseInt(event.target.value, 10);
-              if (Number.isNaN(receiptNumber)) {
-                setReceiptNumber(null);
+              const value = event.target.value;
+              if (value === "") {
+                setLocalReceiptNumber(suggestedReceiptNumber);
               } else {
-                const validated = ReceiptNumber(receiptNumber);
-                if (validated instanceof type.errors) {
-                  setReceiptNumber(null);
-                } else {
-                  setReceiptNumber(validated);
+                const receiptNumber = Number.parseInt(value, 10);
+                if (!Number.isNaN(receiptNumber)) {
+                  setLocalReceiptNumber(receiptNumber);
                 }
               }
             }}
@@ -128,13 +147,8 @@ export function Information(): ReactElement {
               if (event.key === "Backspace") {
                 event.preventDefault();
                 if (event.currentTarget.value !== "") {
-                  setReceiptNumber(null);
+                  setLocalReceiptNumber(suggestedReceiptNumber);
                 }
-                requestAnimationFrame(() => {
-                  const input = receiptInputRef.current;
-                  input?.focus();
-                  input?.select();
-                });
                 return;
               }
 
@@ -148,35 +162,29 @@ export function Information(): ReactElement {
                 if (Number.isNaN(receiptNumber))
                   return;
 
-                // UNCONFIRMED ステータスで注文を作成
-                const now = new Date().toISOString();
-                const orderId = createId();
-
                 const validatedReceiptNumber = ReceiptNumber(receiptNumber);
                 if (validatedReceiptNumber instanceof type.errors)
                   return;
 
-                const newOrder: Order = {
-                  id: Order.get("id").from(orderId),
-                  receiptNumber: validatedReceiptNumber,
-                  createdAt: now,
-                  status: "UNCONFIRMED",
-                  statusChange: [
-                    {
-                      to: "UNCONFIRMED",
-                      at: now,
-                    },
-                  ],
-                  items: [],
-                };
-
-                $orders.set([...$orders.get(), newOrder]);
-
-                // currentOrder に orderId と receiptNumber を保存
+                // orderId を生成して currentOrder に保存 (Enter時のみ)
+                // $orders への追加は注文確定時 (AmountSection.handleConfirm) まで待つ
+                const now = new Date().toISOString();
+                const orderId = createId();
                 setOrderId(orderId);
                 setReceiptNumber(validatedReceiptNumber);
+                setCreatedAt(now); // 受付番号発行時刻を記録
 
                 $orderPhase.set("SELECT_ITEMS");
+              }
+            }}
+            onKeyUp={(event) => {
+              if (event.key === "Backspace") {
+                event.preventDefault();
+                requestAnimationFrame(() => {
+                  const input = receiptInputRef.current;
+                  input?.focus();
+                  input?.select();
+                });
               }
             }}
             outline={{
@@ -186,7 +194,7 @@ export function Information(): ReactElement {
             outlineColor="black"
             ref={receiptInputRef}
             textAlign="center"
-            value={ReceiptNumberImpl(order.receiptNumber).toStr()}
+            value={localReceiptNumber.toString()}
             w="10"
           />
         </HStack>

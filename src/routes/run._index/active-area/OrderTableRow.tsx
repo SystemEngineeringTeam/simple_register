@@ -4,7 +4,7 @@ import type { ItemWithItemNumber } from "@/types/item";
 import type { Nullable } from "@/types/utils";
 import { useStore } from "@nanostores/react";
 import { HStack, styled as p } from "panda/jsx";
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import { match, P } from "ts-pattern";
 import { NumberInput } from "@/components/atomic/NumberInput";
 import { Table } from "@/components/atomic/Table";
@@ -57,7 +57,7 @@ function ItemName(
   );
 }
 
-export function OrderTableRow(
+export const OrderTableRow = memo((
   props: {
     disabled: boolean;
     discountAmount: number;
@@ -70,7 +70,7 @@ export function OrderTableRow(
     productCodeRef?: React.RefObject<HTMLInputElement | null> | undefined;
     quantityRef?: React.RefObject<HTMLInputElement | null> | undefined;
   },
-): ReactElement {
+): ReactElement => {
   const itemInfo = useMemo(() => {
     if (!props.productCode || props.productCode.trim() === "") {
       return null;
@@ -118,7 +118,7 @@ export function OrderTableRow(
         />
       </Table.cell>
       <Table.cell align="right">
-        {itemInfo?.price ?? "---"}
+        {itemInfo?.price != null ? `@${itemInfo.price}` : "---"}
       </Table.cell>
       <Table.cell align="right">
         <HStack>
@@ -153,4 +153,4 @@ export function OrderTableRow(
       </Table.cell>
     </p.tr>
   );
-}
+});

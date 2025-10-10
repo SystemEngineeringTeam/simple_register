@@ -43,27 +43,27 @@
       {
         "id": "d4yc9h64cixo921ybzntcgf7",
         "name": "チルソン",
-        "price": 150
+        "price": 100
       },
       {
         "id": "p92trulfts7pz8pgiisehpmu",
         "name": "アクエリ",
-        "price": 150
+        "price": 100
       },
       {
         "id": "uqwhams80qhqk99xdeo9i79n",
         "name": "MATCH",
-        "price": 150
+        "price": 100
       },
       {
         "id": "rgo5yg85cn4mwn33bug1hcvv",
         "name": "水",
-        "price": 150
+        "price": 100
       },
       {
         "id": "m8gqxv1kamut7ernwoxhdexf",
         "name": "麦茶",
-        "price": 150
+        "price": 100
       }
     ]
   }
