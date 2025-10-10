@@ -78,7 +78,7 @@ function Status(): ReactElement {
         px="2"
       >
         <InlineReceiptNumber>
-          {receiptNumber}
+          {ReceiptNumberImpl(receiptNumber).toStr()}
         </InlineReceiptNumber>
         <IconMaterialSymbolsRestartAlt />
         <p.p>注文をリセットしました</p.p>

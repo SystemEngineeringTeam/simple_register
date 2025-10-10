@@ -7,12 +7,13 @@ import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { Expanded } from "@/components/atomic/Expanded";
 import { NumberInput } from "@/components/atomic/NumberInput";
 import { registerReceiptInput } from "@/lib/focus-manager";
+import { ReceiptNumberImpl } from "@/lib/order";
 import { setCreatedAt, setOrderId, setReceiptNumber } from "@/lib/stores/current-order";
 import { $items } from "@/lib/stores/items";
 import { $orders } from "@/lib/stores/orders";
 import { $orderPhase } from "@/lib/stores/phase";
 import { setStatusWithTimeout } from "@/lib/stores/status";
-import { ReceiptNumber } from "@/types/order";
+import { MAX_RECEIPT_NUMBER, ReceiptNumber } from "@/types/order";
 import { PhaseIndicator } from "./PhaseIndicator";
 
 const ItemInfo = memo((): ReactElement => {
@@ -79,10 +80,11 @@ export function Information(): ReactElement {
   const orderPhase = useStore($orderPhase);
   const receiptInputRef = useRef<HTMLInputElement>(null);
 
-  // 前回の受付番号+1を提案値として計算
+  // 前回の受付番号+1を提案値として計算（MAX_RECEIPT_NUMBERを超えたら1に戻る）
   const suggestedReceiptNumber = useMemo(() => {
     const lastOrder = orders.at(-1);
-    return (lastOrder?.receiptNumber ?? 0) + 1;
+    const nextNumber = (lastOrder?.receiptNumber ?? 0) + 1;
+    return nextNumber > MAX_RECEIPT_NUMBER ? 1 : nextNumber;
   }, [orders]);
 
   // ローカル状態で受付番号を管理
@@ -202,7 +204,7 @@ export function Information(): ReactElement {
             outlineColor="black"
             ref={receiptInputRef}
             textAlign="center"
-            value={localReceiptNumber.toString()}
+            value={ReceiptNumberImpl(localReceiptNumber).toStr()}
             w="10"
           />
           {suggestedReceiptNumber !== localReceiptNumber

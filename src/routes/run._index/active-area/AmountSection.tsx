@@ -98,6 +98,18 @@ export function AmountSection(): ReactElement {
     return Math.max(0, depositNumber - total);
   }, [depositAmount, total]);
 
+  // 預かり金額の表示用フォーマット（カンマ区切り）
+  const depositAmountDisplay = useMemo(() => {
+    if (depositAmount === "") {
+      return "";
+    }
+    const num = Number.parseInt(depositAmount, 10);
+    if (Number.isNaN(num)) {
+      return depositAmount;
+    }
+    return num.toLocaleString("ja-JP");
+  }, [depositAmount]);
+
   const discountInputRef = useRef<HTMLInputElement>(null);
   const depositInputRef = useRef<HTMLInputElement>(null);
   const confirmButtonRef = useRef<HTMLButtonElement>(null);
@@ -217,7 +229,7 @@ export function AmountSection(): ReactElement {
             </Table.cell>
             <Table.cell textAlign="right">
               <HStack gap="2" justifyContent="flex-end">
-                <p.code fontSize="2xl">{total}</p.code>
+                <p.code fontSize="2xl">{total.toLocaleString("ja-JP")}</p.code>
                 <p.p>円</p.p>
               </HStack>
             </Table.cell>
@@ -319,7 +331,7 @@ export function AmountSection(): ReactElement {
                   fontSize="2xl"
                   w="32"
                 >
-                  {totalDiscount > 0 ? `-${totalDiscount}` : "0"}
+                  {totalDiscount > 0 ? `-${totalDiscount.toLocaleString("ja-JP")}` : "0"}
                 </p.code>
                 <p.p>円</p.p>
               </HStack>
@@ -336,7 +348,9 @@ export function AmountSection(): ReactElement {
                   fontSize="2xl"
                   inputMode="numeric"
                   onChange={(event) => {
-                    setDepositAmount(event.target.value);
+                    // カンマを除去して数値のみを保存
+                    const rawValue = event.target.value.replace(/,/g, "");
+                    setDepositAmount(rawValue);
                     if (rightStep === "CONFIRM") {
                       setRightStep("DEPOSIT");
                     }
@@ -388,7 +402,7 @@ export function AmountSection(): ReactElement {
                   }}
                   ref={depositInputRef}
                   textAlign="right"
-                  value={depositAmount}
+                  value={depositAmountDisplay}
                   w="32"
                 />
                 <p.p>円</p.p>
@@ -401,7 +415,7 @@ export function AmountSection(): ReactElement {
             </Table.cell>
             <Table.cell textAlign="right">
               <HStack gap="2" justifyContent="flex-end">
-                <p.code fontSize="2xl">{change}</p.code>
+                <p.code fontSize="2xl">{change.toLocaleString("ja-JP")}</p.code>
                 <p.p>円</p.p>
               </HStack>
             </Table.cell>

@@ -110,6 +110,7 @@ export function OrderTable(): ReactElement {
   }, [displayRows.length]);
 
   const [pendingFocusIndex, setPendingFocusIndex] = useState<number>();
+  const [pendingFocusField, setPendingFocusField] = useState<KeyField>("productCode");
   const tableRef = useRef<HTMLTableElement>(null);
   const hasActivatedRef = useRef(false);
 
@@ -148,12 +149,14 @@ export function OrderTable(): ReactElement {
         if (displayRows.length === 0) {
           return;
         }
+        setPendingFocusField("productCode");
         setPendingFocusIndex(0);
       },
       focusLastRowProductInput: () => {
         if (displayRows.length === 0) {
           return;
         }
+        setPendingFocusField("productCode");
         setPendingFocusIndex(displayRows.length - 1);
       },
     });
@@ -169,7 +172,7 @@ export function OrderTable(): ReactElement {
     if (pendingFocusIndex == null) {
       return;
     }
-    const input = rowRefs[pendingFocusIndex]?.productCode.current;
+    const input = rowRefs[pendingFocusIndex]?.[pendingFocusField].current;
     if (input) {
       input.focus();
       input.select();
@@ -177,7 +180,7 @@ export function OrderTable(): ReactElement {
       // eslint-disable-next-line react-hooks-extra/no-direct-set-state-in-use-effect
       setPendingFocusIndex(undefined);
     }
-  }, [isActive, pendingFocusIndex, rowRefs]);
+  }, [isActive, pendingFocusIndex, pendingFocusField, rowRefs]);
 
   const handleChange = (rowId: number, field: KeyField, value: string): void => {
     updateOrderRows((previousRows) =>
@@ -295,12 +298,57 @@ export function OrderTable(): ReactElement {
         return nextRows;
       });
 
-      if (targetIndex === rows.length - 1) {
-        appendOrderRow();
+      if (field === "productCode") {
+        // 商品コードから Tab を押した場合は同じ行の個数にフォーカス
+        if (event.key === "Tab") {
+          setPendingFocusField("quantity");
+          setPendingFocusIndex(displayIndex);
+        } else if (event.key === "Enter") {
+          // 商品コードから Enter を押した場合は個数を1で補完して次の行へ
+          if (targetIndex === rows.length - 1) {
+            appendOrderRow();
+          }
+          setPendingFocusField("productCode");
+          setPendingFocusIndex(displayIndex + 1);
+        }
+      } else if (field === "quantity") {
+        // 個数のバリデーション: 10を超える場合はエラー
+        const quantity = Number.parseInt(currentValue || "1", 10);
+        if (quantity > 10) {
+          event.preventDefault();
+          event.currentTarget.select();
+          setStatusWithTimeout(
+            {
+              type: "INVALID_VALUE",
+              detail: { type: "QUANTITY_TOO_LARGE", quantity },
+              receiptNumber: $currentOrder.get().receiptNumber,
+            },
+          );
+          return;
+        }
+
+        // 個数から Tab/Enter を押した場合は次の行の商品コードにフォーカス
+        if (targetIndex === rows.length - 1) {
+          appendOrderRow();
+        }
+        setPendingFocusField("productCode");
+        setPendingFocusIndex(displayIndex + 1);
+      }
+    } else if (event.key === "Backspace") {
+      const currentFieldValue = event.currentTarget.value.trim();
+
+      // フィールドに値がある場合は、まず空にする
+      if (currentFieldValue !== "") {
+        event.preventDefault();
+        updateOrderRows((previousRows) =>
+          previousRows.map((candidate) =>
+            candidate.id === row.id ? { ...candidate, [field]: "" } : candidate,
+          ),
+        );
+        return;
       }
 
-      setPendingFocusIndex(displayIndex + 1);
-    } else if (event.key === "Backspace") {
+      // フィールドが既に空の場合は、前のセルに移動
       event.preventDefault();
 
       if (field === "productCode" && displayIndex === 0 && isRowEmpty(row)) {
