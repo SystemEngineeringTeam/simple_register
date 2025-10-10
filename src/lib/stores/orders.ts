@@ -27,19 +27,26 @@ export function changeOrderStatus(
   newStatus: Order["status"],
 ): boolean {
   const orders = $orders.get();
-  const orderIndex = orders.findIndex((order) => order.receiptNumber === receiptNumber);
 
-  if (orderIndex === -1) {
+  // 同じ受付番号の注文を全て取得
+  const matchingOrders = orders
+    .map((order, index) => ({ order, index }))
+    .filter(({ order }) => order.receiptNumber === receiptNumber);
+
+  if (matchingOrders.length === 0) {
     return false;
   }
+
+  // createdAtの降順（最新が先頭）でソートし、最新のものを取得
+  const sortedMatches = matchingOrders.sort((a, b) => {
+    const dateA = new Date(a.order.createdAt).getTime();
+    const dateB = new Date(b.order.createdAt).getTime();
+    return dateB - dateA; // 降順
+  });
+
+  const { order, index: orderIndex } = sortedMatches[0]!;
 
   const updatedOrders = [...orders];
-  const order = updatedOrders[orderIndex];
-
-  if (!order) {
-    return false;
-  }
-
   updatedOrders[orderIndex] = {
     ...order,
     status: newStatus,

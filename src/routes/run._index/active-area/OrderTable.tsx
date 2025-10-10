@@ -218,6 +218,11 @@ export function OrderTable(): ReactElement {
 
         // 空の場合の処理
         if (currentValue === "") {
+          if (event.key === "Tab") {
+            // Tabキーで空のまま移動しようとした場合は阻止
+            event.preventDefault();
+            return;
+          }
           if (event.key === "Enter" && isLastDisplayRow) {
             event.preventDefault();
 

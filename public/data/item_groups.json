@@ -25,13 +25,23 @@
     "name": "缶ジュース",
     "children": [
       {
-        "id": "m5nidhr02wvgzvel38u5ws8p",
-        "name": "ファンタ",
+        "id": "bdxpj17blx4jza95ii92zxdm",
+        "name": "ﾌｧﾝﾀ ｵﾚﾝｼﾞ",
+        "price": 100
+      },
+      {
+        "id": "n1rbanpsl0s6jfn223y3j5cr",
+        "name": "ﾌｧﾝﾀ ｸﾞﾚｰﾌﾟ",
         "price": 100
       },
       {
         "id": "ke03npycplggquox4ge694hk",
         "name": "コーラ",
+        "price": 100
+      },
+      {
+        "id": "y9ojznta5r3cs3un59lwpiow",
+        "name": "ラムネ",
         "price": 100
       }
     ]

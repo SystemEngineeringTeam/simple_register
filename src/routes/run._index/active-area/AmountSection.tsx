@@ -94,7 +94,9 @@ export function AmountSection(): ReactElement {
   }, [filledRows, discountCode]);
 
   const change = useMemo(() => {
-    const depositNumber = Number.parseInt(depositAmount || "0", 10);
+    // カンマを除去してから数値に変換
+    const cleanedDeposit = (depositAmount || "0").replace(/,/g, "");
+    const depositNumber = Number.parseInt(cleanedDeposit, 10);
     return Math.max(0, depositNumber - total);
   }, [depositAmount, total]);
 
@@ -381,7 +383,9 @@ export function AmountSection(): ReactElement {
                     } else if (event.key === "Enter") {
                       event.preventDefault();
                       const currentValue = event.currentTarget.value;
-                      const depositNumber = Number.parseInt(currentValue || "0", 10);
+                      // カンマを除去してから数値に変換
+                      const cleanedValue = (currentValue || "0").replace(/,/g, "");
+                      const depositNumber = Number.parseInt(cleanedValue, 10);
 
                       // 預かり金額が合計金額に足りない場合のバリデーション
                       if (depositNumber < total) {
