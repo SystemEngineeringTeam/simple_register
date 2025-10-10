@@ -11,6 +11,7 @@ import { setCreatedAt, setOrderId, setReceiptNumber } from "@/lib/stores/current
 import { $items } from "@/lib/stores/items";
 import { $orders } from "@/lib/stores/orders";
 import { $orderPhase } from "@/lib/stores/phase";
+import { setStatusWithTimeout } from "@/lib/stores/status";
 import { ReceiptNumber } from "@/types/order";
 import { PhaseIndicator } from "./PhaseIndicator";
 
@@ -163,10 +164,17 @@ export function Information(): ReactElement {
                   return;
 
                 const validatedReceiptNumber = ReceiptNumber(receiptNumber);
-                if (validatedReceiptNumber instanceof type.errors)
+                if (validatedReceiptNumber instanceof type.errors) {
+                  event.currentTarget.select();
+                  setStatusWithTimeout(
+                    {
+                      type: "INVALID_VALUE",
+                      detail: { type: "RECEIPT_NUMBER", receiptNumber },
+                      receiptNumber: null,
+                    },
+                  );
                   return;
-
-                // orderId を生成して currentOrder に保存 (Enter時のみ)
+                } // orderId を生成して currentOrder に保存 (Enter時のみ)
                 // $orders への追加は注文確定時 (AmountSection.handleConfirm) まで待つ
                 const now = new Date().toISOString();
                 const orderId = createId();
@@ -197,6 +205,14 @@ export function Information(): ReactElement {
             value={localReceiptNumber.toString()}
             w="10"
           />
+          {suggestedReceiptNumber !== localReceiptNumber
+            ? (
+                <HStack color="yellow.600" fontSize="sm" fontWeight="bold" gap="1">
+                  <IconMaterialSymbolsWarning />
+                  受付番号の変更アリ (未連続)
+                </HStack>
+              )
+            : null}
         </HStack>
         <PhaseIndicator />
       </VStack>

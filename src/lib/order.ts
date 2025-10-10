@@ -42,7 +42,7 @@ export function ReceiptNumberImpl(receiptNumber: Nullable<number>) {
   return {
     toStr: () => {
       if (receiptNumber == null) {
-        return "";
+        return "?";
       }
       return receiptNumber.toString().padStart(2, "0");
     },

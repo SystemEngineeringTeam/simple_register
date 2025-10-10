@@ -1,6 +1,5 @@
 import type { ReactElement } from "react";
 import type { Status } from "@/lib/stores/status";
-import type { Nullable } from "@/types/utils";
 import { useStore } from "@nanostores/react";
 import { css } from "panda/css";
 import { HStack, styled as p } from "panda/jsx";
@@ -24,7 +23,9 @@ const InlineReceiptNumber = p("code", {
   },
 });
 
-function Status({ status }: { status: Nullable<Status> }): ReactElement {
+function Status(): ReactElement {
+  const status = useStore($status);
+
   return match(status)
     .with({ type: "RESET_PROGRESS" }, ({ progress, receiptNumber }) =>
       progress >= 0.2
@@ -83,14 +84,106 @@ function Status({ status }: { status: Nullable<Status> }): ReactElement {
         <p.p>注文をリセットしました</p.p>
       </HStack>
     ))
-
+    .with({ type: "INVALID_VALUE" }, ({ receiptNumber, detail }) => (
+      <HStack
+        bg="yellow.400"
+        fontWeight="bold"
+        gap="1"
+        h="full"
+        px="2"
+      >
+        <InlineReceiptNumber>
+          {ReceiptNumberImpl(receiptNumber).toStr()}
+        </InlineReceiptNumber>
+        {match(detail)
+          .with({ type: "RECEIPT_NUMBER" }, ({ receiptNumber: invalidReceiptNumber }) => (
+            <>
+              <IconMaterialSymbolsError />
+              <p.p>
+                受付番号
+                {" "}
+                <p.code>{invalidReceiptNumber}</p.code>
+                {" "}
+                は範囲外です (範囲: 1–50)
+              </p.p>
+            </>
+          ))
+          .with({ type: "ITEM_EMPTY" }, () => (
+            <>
+              <IconMaterialSymbolsError />
+              <p.p>
+                商品が 1 つも選択されていません
+              </p.p>
+            </>
+          ))
+          .with({ type: "ITEM_NUMBER" }, ({ itemNumber }) => (
+            <>
+              <IconMaterialSymbolsIndeterminateQuestionBox />
+              <p.p>
+                商品番号
+                {" "}
+                <p.code>{itemNumber}</p.code>
+                {" "}
+                に該当する商品はありません
+              </p.p>
+            </>
+          ))
+          .with({ type: "DISCOUNT_NUMBER" }, ({ discountNumber }) => (
+            <>
+              <IconMdiTagHidden />
+              <p.p>
+                割引番号
+                {" "}
+                <p.code>{discountNumber}</p.code>
+                {" "}
+                に該当する割引はありません
+              </p.p>
+            </>
+          ))
+          .with({ type: "QUANTITY_TOO_LARGE" }, ({ quantity }) => (
+            <>
+              <IconMaterialSymbolsError />
+              <p.p>
+                数量
+                {" "}
+                <p.code>{quantity.toString()}</p.code>
+                {" "}
+                は大きすぎます
+              </p.p>
+            </>
+          ))
+          .with({ type: "DEPOSIT_INSUFFICIENT" }, ({ deposit, total }) => (
+            <>
+              <IconMaterialSymbolsIndeterminateQuestionBox />
+              <p.p>
+                預かり金額&ensp;
+                <p.code>{deposit}</p.code>
+                &ensp;円は, 合計金額&ensp;
+                <p.code>{total}</p.code>
+                &ensp;円に対して不足しています
+              </p.p>
+            </>
+          ))
+          .exhaustive()}
+      </HStack>
+    ))
+    .with({ type: "ORDER_CONFIRMED" }, ({ receiptNumber }) => (
+      <HStack bg="purple.500" color="white" gap="1" h="full" px="2">
+        <HStack fontWeight="bold" gap="1">
+          <InlineReceiptNumber>
+            {ReceiptNumberImpl(receiptNumber).toStr()}
+          </InlineReceiptNumber>
+          <IconMaterialSymbolsBucketCheck />
+          <p.p>注文を確定しました</p.p>
+        </HStack>
+      </HStack>
+    ))
     .otherwise(() => <></>);
 }
 
 export function StatusBar(): ReactElement {
   const systemStartedTimeStr = useStore($systemStartTimeStr).timeOnly;
   const systemUptimeStr = useStore($systemUptimeMs());
-  const status = useStore($status);
 
   return (
     <Expanded
@@ -110,19 +203,11 @@ export function StatusBar(): ReactElement {
           p="1"
         >
           <IconMaterialSymbolsSync />
-          <p.p>保存中...</p.p>
+          <p.p>保存を再試行しています...</p.p>
         </HStack>
-        <HStack bg="purple.500" color="white" gap="1" h="full" px="2">
-          <HStack fontWeight="bold" gap="1">
-            <InlineReceiptNumber>
-              10
-            </InlineReceiptNumber>
-            <IconMaterialSymbolsBucketCheck />
-            <p.p>注文を確定しました</p.p>
-          </HStack>
-        </HStack>
+
         <HStack h="full">
-          <Status status={status} />
+          <Status />
         </HStack>
       </HStack>
       <HStack>

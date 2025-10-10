@@ -7,7 +7,12 @@
 export {}
 declare global {
   const IconMaterialSymbolsBucketCheck: typeof import('~icons/material-symbols/bucket-check.jsx')['default']
+  const IconMaterialSymbolsError: typeof import('~icons/material-symbols/error.jsx')['default']
+  const IconMaterialSymbolsIndeterminateQuestionBox: typeof import('~icons/material-symbols/indeterminate-question-box.jsx')['default']
   const IconMaterialSymbolsRestartAlt: typeof import('~icons/material-symbols/restart-alt.jsx')['default']
   const IconMaterialSymbolsSchedule: typeof import('~icons/material-symbols/schedule.jsx')['default']
   const IconMaterialSymbolsSync: typeof import('~icons/material-symbols/sync.jsx')['default']
+  const IconMaterialSymbolsWarning: typeof import('~icons/material-symbols/warning.jsx')['default']
+  const IconMdiBookmarkRemove: typeof import('~icons/mdi/bookmark-remove.jsx')['default']
+  const IconMdiTagHidden: typeof import('~icons/mdi/tag-hidden.jsx')['default']
 }

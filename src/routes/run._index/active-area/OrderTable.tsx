@@ -12,6 +12,7 @@ import {
   registerOrderFocusHelpers,
 } from "@/lib/focus-manager";
 import {
+  $currentOrder,
   $discountCode,
   $orderRows,
   appendOrderRow,
@@ -21,6 +22,7 @@ import {
   updateOrderRows,
 } from "@/lib/stores/current-order";
 import { $orderPhase } from "@/lib/stores/phase";
+import { setStatusWithTimeout } from "@/lib/stores/status";
 import { DiscountNumber, ItemNumber } from "@/types/item";
 import { OrderTableRow } from "./OrderTableRow";
 
@@ -201,8 +203,7 @@ export function OrderTable(): ReactElement {
       return;
     }
 
-    if (event.key === "Enter") {
-      event.preventDefault();
+    if (event.key === "Enter" || event.key === "Tab") {
       const currentValue = event.currentTarget.value.trim();
       const targetIndex = rowIndexMap.get(row.id);
       if (targetIndex == null) {
@@ -211,14 +212,71 @@ export function OrderTable(): ReactElement {
 
       if (field === "productCode") {
         const isLastDisplayRow = displayIndex === displayRows.length - 1;
-        if (isLastDisplayRow && currentValue === "") {
-          $orderPhase.set("CHECK_DISCOUNT");
-          return;
-        }
+
+        // 空の場合の処理
         if (currentValue === "") {
-          return;
+          if (event.key === "Enter" && isLastDisplayRow) {
+            event.preventDefault();
+
+            // 全ての行が空かチェック
+            const allRowsEmpty = rows.every(isRowEmpty);
+            if (allRowsEmpty) {
+              // 商品が1つも選択されていない
+              setStatusWithTimeout(
+                {
+                  type: "INVALID_VALUE",
+                  detail: { type: "ITEM_EMPTY" },
+                  receiptNumber: $currentOrder.get().receiptNumber,
+                },
+              );
+              return;
+            }
+
+            $orderPhase.set("CHECK_DISCOUNT");
+            return;
+          }
+          if (event.key === "Enter") {
+            event.preventDefault();
+            return;
+          }
+        } else {
+          // 商品番号が入力されている場合、該当する商品があるかチェック
+          const itemNumber = wrapValidation(
+            ItemNumber(Number.parseInt(currentValue, 10)),
+          ).unwrapOr(null);
+
+          if (itemNumber == null) {
+            // バリデーションエラー：該当しない
+            event.preventDefault();
+            event.currentTarget.select();
+            setStatusWithTimeout(
+              {
+                type: "INVALID_VALUE",
+                detail: { type: "ITEM_NUMBER", itemNumber: currentValue },
+                receiptNumber: $currentOrder.get().receiptNumber,
+              },
+            );
+            return;
+          }
+
+          const item = findItemByNumber(itemNumber);
+          if (!item) {
+            // 商品が見つからない：該当しない
+            event.preventDefault();
+            event.currentTarget.select();
+            setStatusWithTimeout(
+              {
+                type: "INVALID_VALUE",
+                receiptNumber: $currentOrder.get().receiptNumber,
+                detail: { type: "ITEM_NUMBER", itemNumber: currentValue },
+              },
+            );
+            return;
+          }
         }
       }
+
+      event.preventDefault();
 
       updateOrderRows((previousRows) => {
         const index = previousRows.findIndex((candidate) => candidate.id === row.id);

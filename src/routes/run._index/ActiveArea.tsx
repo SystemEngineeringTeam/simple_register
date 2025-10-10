@@ -6,7 +6,7 @@ import { Expanded } from "@/components/atomic/Expanded";
 import { focusReceiptInput } from "@/lib/focus-manager";
 import { $currentOrder, resetCurrentOrder } from "@/lib/stores/current-order";
 import { $orderPhase } from "@/lib/stores/phase";
-import { $status } from "@/lib/stores/status";
+import { $status, setStatusWithTimeout } from "@/lib/stores/status";
 import { AmountSection } from "./active-area/AmountSection";
 import { Information } from "./active-area/Information";
 import { OrderTable } from "./active-area/OrderTable";
@@ -71,7 +71,7 @@ export function ActiveArea(): ReactElement {
       const elapsed = Date.now() - startTimeRef.current;
       const progress = Math.min(1, elapsed / LONG_PRESS_DURATION);
       const receiptNumber = $currentOrder.get().receiptNumber;
-      $status.set({ type: "RESET_PROGRESS", progress, receiptNumber });
+      setStatusWithTimeout({ type: "RESET_PROGRESS", progress, receiptNumber }, 0);
     };
 
     const triggerReset = (receiptNumber: Nullable<number>): void => {
@@ -86,9 +86,8 @@ export function ActiveArea(): ReactElement {
       requestAnimationFrame(() => {
         focusReceiptInput();
       });
-      $status.set({ type: "RESET", receiptNumber });
+      setStatusWithTimeout({ type: "RESET", receiptNumber }, 1000);
       statusClearTimerRef.current = window.setTimeout(() => {
-        $status.set(null);
         resetCompletedRef.current = false;
       }, 1000);
     };

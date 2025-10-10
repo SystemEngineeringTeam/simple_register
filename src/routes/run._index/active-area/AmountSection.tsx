@@ -19,8 +19,9 @@ import {
   setDepositAmount,
   setDiscountCode,
 } from "@/lib/stores/current-order";
-import { $orders } from "@/lib/stores/orders";
+import { $lastConfirmedOrderId, $orders } from "@/lib/stores/orders";
 import { $orderPhase } from "@/lib/stores/phase";
+import { setStatusWithTimeout } from "@/lib/stores/status";
 import { DiscountNumber, ItemNumber } from "@/types/item";
 import { Order } from "@/types/order";
 
@@ -177,6 +178,9 @@ export function AmountSection(): ReactElement {
       };
 
       $orders.set([...currentOrders, newOrder]);
+
+      // 最後に確定された注文のIDを設定（ハイライト用）
+      $lastConfirmedOrderId.set(newOrder.id);
     } // eslint-disable-next-line no-console
     console.log("[ORDER_CONFIRMATION]", {
       receiptNumber,
@@ -193,6 +197,8 @@ export function AmountSection(): ReactElement {
     $orderPhase.set("CHECK_RECEIPT_NUMBER");
     setRightStep("DISCOUNT");
     dotPressedRef.current = false;
+
+    setStatusWithTimeout({ type: "ORDER_CONFIRMED", receiptNumber });
   };
 
   return (
@@ -254,6 +260,42 @@ export function AmountSection(): ReactElement {
                           }
                         } else if (event.key === "Enter") {
                           event.preventDefault();
+                          const currentValue = event.currentTarget.value;
+
+                          // 割引番号が入力されている場合のバリデーション
+                          if (currentValue !== "") {
+                            const discountNumber = wrapValidation(
+                              DiscountNumber(Number.parseInt(currentValue, 10)),
+                            ).unwrapOr(null);
+
+                            if (discountNumber == null) {
+                              // バリデーションエラー
+                              event.currentTarget.select();
+                              setStatusWithTimeout(
+                                {
+                                  type: "INVALID_VALUE",
+                                  detail: { type: "DISCOUNT_NUMBER", discountNumber: currentValue },
+                                  receiptNumber: currentOrder.receiptNumber,
+                                },
+                              );
+                              return;
+                            }
+
+                            const discount = findDiscountByNumber(discountNumber);
+                            if (!discount) {
+                              // 割引が見つからない
+                              event.currentTarget.select();
+                              setStatusWithTimeout(
+                                {
+                                  type: "INVALID_VALUE",
+                                  receiptNumber: currentOrder.receiptNumber,
+                                  detail: { type: "DISCOUNT_NUMBER", discountNumber: currentValue },
+                                },
+                              );
+                              return;
+                            }
+                          }
+
                           $orderPhase.set("PROCESS_PAYMENT");
                           setRightStep("DEPOSIT");
                           dotPressedRef.current = false;
@@ -324,6 +366,22 @@ export function AmountSection(): ReactElement {
                       }
                     } else if (event.key === "Enter") {
                       event.preventDefault();
+                      const currentValue = event.currentTarget.value;
+                      const depositNumber = Number.parseInt(currentValue || "0", 10);
+
+                      // 預かり金額が合計金額に足りない場合のバリデーション
+                      if (depositNumber < total) {
+                        event.currentTarget.select();
+                        setStatusWithTimeout(
+                          {
+                            type: "INVALID_VALUE",
+                            detail: { type: "DEPOSIT_INSUFFICIENT", deposit: depositNumber, total },
+                            receiptNumber: currentOrder.receiptNumber,
+                          },
+                        );
+                        return;
+                      }
+
                       setRightStep("CONFIRM");
                       dotPressedRef.current = false;
                     }

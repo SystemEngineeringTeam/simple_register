@@ -4,7 +4,7 @@ import { Item } from "./item";
 export const OrderNumber = type("0 <= number.integer#orderNumber <= 9999");
 export type OrderNumber = typeof OrderNumber.infer;
 
-export const ReceiptNumber = type("0 <= number.integer#receiptNumber <= 50");
+export const ReceiptNumber = type("1 <= number.integer#receiptNumber <= 50");
 export type ReceiptNumber = typeof ReceiptNumber.infer;
 
 export const OrderItemAmount = type("0 <= number.integer#orderItemAmount <= 100");

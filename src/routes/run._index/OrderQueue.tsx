@@ -12,7 +12,7 @@ import { ItemImpl } from "@/lib/item";
 import { OrderStatusImpl, ReceiptNumberImpl } from "@/lib/order";
 import { $currentOrder, $normalizedCurrentOrderItems } from "@/lib/stores/current-order";
 import { $items } from "@/lib/stores/items";
-import { $orders } from "@/lib/stores/orders";
+import { $lastConfirmedOrderId, $orders } from "@/lib/stores/orders";
 import { $orderPhase } from "@/lib/stores/phase";
 import { dateToStr } from "@/lib/time";
 import { Order } from "@/types/order";
@@ -21,8 +21,9 @@ type DisplayOrderItem = Order["items"][number] & { itemNumber: ItemNumber | null
 type DisplayOrder = OmitStrict<Order, "items"> & { items: DisplayOrderItem[] };
 
 // メモ化された注文行コンポーネント
-const OrderQueueRow = memo(({ order }: { order: DisplayOrder }): ReactElement => (
+const OrderQueueRow = memo(({ order, isLastConfirmed }: { order: DisplayOrder; isLastConfirmed?: boolean }): ReactElement => (
   <p.tr
+    data-highlight-warn-once={isLastConfirmed === true ? "true" : undefined}
     key={order.id}
     style={{ backgroundColor: OrderStatusImpl(order.status).toColor().bg }}
   >
@@ -79,6 +80,7 @@ const OrderQueueRow = memo(({ order }: { order: DisplayOrder }): ReactElement =>
 const ConfirmedOrdersList = memo((): ReactElement => {
   const orders = useStore($orders);
   const items = useStore($items);
+  const lastConfirmedOrderId = useStore($lastConfirmedOrderId);
 
   const ordersWithItemNumbers = useMemo<DisplayOrder[]>(() => {
     const itemNumberMap = new Map<string, ItemNumber>();
@@ -102,7 +104,11 @@ const ConfirmedOrdersList = memo((): ReactElement => {
   return (
     <>
       {ordersWithItemNumbers.map((order) => (
-        <OrderQueueRow key={order.id} order={order} />
+        <OrderQueueRow
+          isLastConfirmed={lastConfirmedOrderId === order.id}
+          key={order.id}
+          order={order}
+        />
       ))}
     </>
   );
