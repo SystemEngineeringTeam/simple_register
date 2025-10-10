@@ -43,6 +43,14 @@ export type Status
   | {
     type: "ORDER_CONFIRMED";
     receiptNumber: Nullable<number>;
+  }
+  | {
+    type: "COOKING_COMPLETED";
+    receiptNumber: number;
+  }
+  | {
+    type: "PICKUP_COMPLETED";
+    receiptNumber: number;
   };
 
 export const $status = atom<Nullable<Status>>();

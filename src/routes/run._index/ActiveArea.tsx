@@ -3,11 +3,13 @@ import type { DialogRef } from "@/components/atomic/Dialog";
 import type { Nullable } from "@/types/utils";
 import { css } from "panda/css";
 import { useEffect, useRef } from "react";
+import { match } from "ts-pattern";
 import { Dialog } from "@/components/atomic/Dialog";
 import { Expanded } from "@/components/atomic/Expanded";
 import { MenuDialog } from "@/components/overlays/MenuDialog";
 import { focusReceiptInput } from "@/lib/focus-manager";
 import { $currentOrder, resetCurrentOrder } from "@/lib/stores/current-order";
+import { $overlayType, closeOverlay, showOverlay } from "@/lib/stores/overlay";
 import { $orderPhase } from "@/lib/stores/phase";
 import { $status, setStatusWithTimeout } from "@/lib/stores/status";
 import { AmountSection } from "./active-area/AmountSection";
@@ -47,18 +49,36 @@ export function ActiveArea(): ReactElement {
   const startTimeRef = useRef<number>(0);
   const menuDialogRef = useRef<DialogRef>(null);
 
-  // テンキーの \ キー (location=3) でメニューダイアログを表示
+  // テンキーでオーバーレイを表示/切り替え/閉じる
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent): void => {
-      // テンキーの \ キーを検出 (key="\" かつ location=3)
+      const overlayType = match(event)
+        .with({ key: "/" }, { keyCode: 111 }, () => "COOKING_COMPLETE" as const)
+        .with({ key: "*" }, () => "PICKUP_COMPLETE" as const)
+        .with({ key: "-" }, () => "ORDER_EDIT" as const)
+        .with({ key: "+" }, () => "ITEM_EDIT" as const)
+        .otherwise(() => null);
 
-      console.log(event);
-      if (event.keyCode === 111 && event.location === 3) {
-        console.log("hey!");
+      if (overlayType !== null) {
         event.preventDefault();
         event.stopPropagation();
         event.stopImmediatePropagation();
-        menuDialogRef.current?.showModal();
+
+        const currentOverlayType = $overlayType.get();
+
+        // 同じキーが押された場合は閉じる
+        if (currentOverlayType === overlayType) {
+          menuDialogRef.current?.close();
+          closeOverlay();
+        } else {
+          // 別のオーバーレイが開いている場合は一旦閉じてから新しいものを開く
+          if (currentOverlayType !== null) {
+            menuDialogRef.current?.close();
+            closeOverlay();
+          }
+          showOverlay(overlayType);
+          menuDialogRef.current?.showModal();
+        }
       }
     };
 
@@ -202,13 +222,14 @@ export function ActiveArea(): ReactElement {
       <RightArea />
       <Dialog
         onClose={() => {
-          // ダイアログが閉じられた時の処理
+          closeOverlay();
         }}
         ref={menuDialogRef}
       >
         <MenuDialog
           onClose={() => {
             menuDialogRef.current?.close();
+            closeOverlay();
           }}
         />
       </Dialog>

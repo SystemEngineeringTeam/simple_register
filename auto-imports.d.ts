@@ -9,6 +9,7 @@ declare global {
   const IconMaterialSymbolsBucketCheck: typeof import('~icons/material-symbols/bucket-check.jsx')['default']
   const IconMaterialSymbolsError: typeof import('~icons/material-symbols/error.jsx')['default']
   const IconMaterialSymbolsIndeterminateQuestionBox: typeof import('~icons/material-symbols/indeterminate-question-box.jsx')['default']
+  const IconMaterialSymbolsPublishedWithChanges: typeof import('~icons/material-symbols/published-with-changes.jsx')['default']
   const IconMaterialSymbolsRestartAlt: typeof import('~icons/material-symbols/restart-alt.jsx')['default']
   const IconMaterialSymbolsSchedule: typeof import('~icons/material-symbols/schedule.jsx')['default']
   const IconMaterialSymbolsSync: typeof import('~icons/material-symbols/sync.jsx')['default']

@@ -8,9 +8,11 @@ export const highlight = defineGlobalStyles({
       "animationName": "highlight-warn",
       "animationIterationCount": "infinite",
       "animationTimingFunction": "steps(2, jump-none)",
-      "& > .flash": {
-        animation: "ping",
-        animationDuration: "2s",
+      "& > [data-highlight-flash='true']": {
+        animation: "highlight-flash",
+        animationDuration: "1s",
+        animationIterationCount: "infinite",
+        animationTimingFunction: "steps(2, jump-none)",
       },
     },
     "& [data-highlight-warn-once='true']": {
@@ -24,11 +26,20 @@ export const highlight = defineGlobalStyles({
 
 // eslint-disable-next-line @pandacss/no-config-function-in-source
 export const highlightKeyframes = defineKeyframes({
+  "highlight-flash": {
+    "0%": {
+      opacity: 1,
+    },
+    "100%": {
+      opacity: 0,
+    },
+  },
   "highlight-warn": {
     "0%": {
       background: "highlight.bg",
+      color: "black",
     },
-    "full": {
+    "100%": {
       background: "transparent",
     },
   },

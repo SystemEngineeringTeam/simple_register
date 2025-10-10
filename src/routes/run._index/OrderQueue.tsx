@@ -12,7 +12,7 @@ import { ItemImpl } from "@/lib/item";
 import { OrderStatusImpl, ReceiptNumberImpl } from "@/lib/order";
 import { $currentOrder, $normalizedCurrentOrderItems } from "@/lib/stores/current-order";
 import { $items } from "@/lib/stores/items";
-import { $lastConfirmedOrderId, $orders } from "@/lib/stores/orders";
+import { $lastConfirmedOrderId, $lastStatusChangedReceiptNumber, $orders } from "@/lib/stores/orders";
 import { $orderPhase } from "@/lib/stores/phase";
 import { dateToStr } from "@/lib/time";
 import { Order } from "@/types/order";
@@ -21,9 +21,9 @@ type DisplayOrderItem = Order["items"][number] & { itemNumber: ItemNumber | null
 type DisplayOrder = OmitStrict<Order, "items"> & { items: DisplayOrderItem[] };
 
 // メモ化された注文行コンポーネント
-const OrderQueueRow = memo(({ order, isLastConfirmed }: { order: DisplayOrder; isLastConfirmed?: boolean }): ReactElement => (
+const OrderQueueRow = memo(({ order, isLastConfirmed, isLastStatusChanged }: { order: DisplayOrder; isLastConfirmed?: boolean; isLastStatusChanged?: boolean }): ReactElement => (
   <p.tr
-    data-highlight-warn-once={isLastConfirmed === true ? "true" : undefined}
+    data-highlight-warn-once={isLastConfirmed === true || isLastStatusChanged === true ? "true" : undefined}
     key={order.id}
     style={{ backgroundColor: OrderStatusImpl(order.status).toColor().bg }}
   >
@@ -81,6 +81,7 @@ const ConfirmedOrdersList = memo((): ReactElement => {
   const orders = useStore($orders);
   const items = useStore($items);
   const lastConfirmedOrderId = useStore($lastConfirmedOrderId);
+  const lastStatusChangedReceiptNumber = useStore($lastStatusChangedReceiptNumber);
 
   const ordersWithItemNumbers = useMemo<DisplayOrder[]>(() => {
     const itemNumberMap = new Map<string, ItemNumber>();
@@ -106,6 +107,7 @@ const ConfirmedOrdersList = memo((): ReactElement => {
       {ordersWithItemNumbers.map((order) => (
         <OrderQueueRow
           isLastConfirmed={lastConfirmedOrderId === order.id}
+          isLastStatusChanged={lastStatusChangedReceiptNumber === order.receiptNumber}
           key={order.id}
           order={order}
         />

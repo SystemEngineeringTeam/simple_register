@@ -86,7 +86,8 @@ function Status(): ReactElement {
     ))
     .with({ type: "INVALID_VALUE" }, ({ receiptNumber, detail }) => (
       <HStack
-        bg="yellow.400"
+        bg="orange.600"
+        color="white"
         fontWeight="bold"
         gap="1"
         h="full"
@@ -175,6 +176,28 @@ function Status(): ReactElement {
           </InlineReceiptNumber>
           <IconMaterialSymbolsBucketCheck />
           <p.p>注文を確定しました</p.p>
+        </HStack>
+      </HStack>
+    ))
+    .with({ type: "COOKING_COMPLETED" }, ({ receiptNumber }) => (
+      <HStack bg="amber.600" color="white" gap="1" h="full" px="2">
+        <HStack fontWeight="bold" gap="1">
+          <InlineReceiptNumber>
+            {ReceiptNumberImpl(receiptNumber).toStr()}
+          </InlineReceiptNumber>
+          <IconMaterialSymbolsPublishedWithChanges />
+          <p.p>注文ステータスを調理完了にしました</p.p>
+        </HStack>
+      </HStack>
+    ))
+    .with({ type: "PICKUP_COMPLETED" }, ({ receiptNumber }) => (
+      <HStack bg="green.600" color="white" gap="1" h="full" px="2">
+        <HStack fontWeight="bold" gap="1">
+          <InlineReceiptNumber>
+            {ReceiptNumberImpl(receiptNumber).toStr()}
+          </InlineReceiptNumber>
+          <IconMaterialSymbolsPublishedWithChanges />
+          <p.p>注文ステータスを受取完了にしました</p.p>
         </HStack>
       </HStack>
     ))

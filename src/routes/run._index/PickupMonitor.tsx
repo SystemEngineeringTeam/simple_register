@@ -4,10 +4,11 @@ import { Center, Grid, styled as p, VStack } from "panda/jsx";
 import { useMemo } from "react";
 import { Expanded } from "@/components/atomic/Expanded";
 import { ReceiptNumberImpl } from "@/lib/order";
-import { $orders } from "@/lib/stores/orders";
+import { $lastStatusChangedReceiptNumber, $orders } from "@/lib/stores/orders";
 
 export function PickupMonitor(): ReactElement {
   const orders = useStore($orders);
+  const lastStatusChangedReceiptNumber = useStore($lastStatusChangedReceiptNumber);
 
   const { waitingCooking, waitingPickup } = useMemo(() => {
     const cooking = orders.filter((order) => order.status === "WAITING_COOKING");
@@ -54,8 +55,8 @@ export function PickupMonitor(): ReactElement {
       </VStack>
       <VStack alignItems="flex-start" gap="0" w="full">
         <p.p
-          bg="green.400"
-          color="black"
+          bg="green.600"
+          color="white"
           fontSize="2xl"
           fontWeight="bold"
           p="1"
@@ -75,6 +76,7 @@ export function PickupMonitor(): ReactElement {
               aspectRatio="1 / 1"
               border="1px solid"
               borderColor="white"
+              data-highlight-warn-once={order.receiptNumber === lastStatusChangedReceiptNumber}
               fontFamily="mono"
               fontSize="3xl"
               fontWeight="bold"

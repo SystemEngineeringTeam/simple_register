@@ -30,7 +30,7 @@ export default defineConfig({
       semanticTokens: {
         colors: {
           highlight: {
-            bg: { value: "{colors.yellow.200}" },
+            bg: { value: "{colors.yellow.300}" },
           },
           orderStatus: {
             unconfirmed: {

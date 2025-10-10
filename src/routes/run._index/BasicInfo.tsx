@@ -14,7 +14,7 @@ function Time(): ReactElement {
 
   return (
     <HStack data-highlight-warn={isOclock} px="1">
-      <IconMaterialSymbolsSchedule />
+      <IconMaterialSymbolsSchedule data-highlight-flash />
       <p.code
         fontSize="xl"
       >
