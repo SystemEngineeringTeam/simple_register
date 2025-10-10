@@ -224,7 +224,7 @@ export function OrderTable(): ReactElement {
             // 全ての行が空かチェック
             const allRowsEmpty = rows.every(isRowEmpty);
             if (allRowsEmpty) {
-              // 商品が1つも選択されていない
+              // 商品が1つも入力されていない
               setStatusWithTimeout(
                 {
                   type: "INVALID_VALUE",

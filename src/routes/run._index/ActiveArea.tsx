@@ -1,8 +1,11 @@
 import type { ReactElement } from "react";
+import type { DialogRef } from "@/components/atomic/Dialog";
 import type { Nullable } from "@/types/utils";
 import { css } from "panda/css";
 import { useEffect, useRef } from "react";
+import { Dialog } from "@/components/atomic/Dialog";
 import { Expanded } from "@/components/atomic/Expanded";
+import { MenuDialog } from "@/components/overlays/MenuDialog";
 import { focusReceiptInput } from "@/lib/focus-manager";
 import { $currentOrder, resetCurrentOrder } from "@/lib/stores/current-order";
 import { $orderPhase } from "@/lib/stores/phase";
@@ -42,6 +45,29 @@ export function ActiveArea(): ReactElement {
   const longPressTriggeredRef = useRef(false);
   const resetCompletedRef = useRef(false);
   const startTimeRef = useRef<number>(0);
+  const menuDialogRef = useRef<DialogRef>(null);
+
+  // テンキーの \ キー (location=3) でメニューダイアログを表示
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      // テンキーの \ キーを検出 (key="\" かつ location=3)
+
+      console.log(event);
+      if (event.keyCode === 111 && event.location === 3) {
+        console.log("hey!");
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        menuDialogRef.current?.showModal();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown, { capture: true });
+
+    return (): void => {
+      window.removeEventListener("keydown", handleKeyDown, { capture: true });
+    };
+  }, []);
 
   useEffect(() => {
     const LONG_PRESS_DURATION = 2000; // ms
@@ -169,10 +195,23 @@ export function ActiveArea(): ReactElement {
       })}
       display="grid"
       gridTemplateColumns="4fr 4fr 3fr"
+      position="relative"
     >
       <LeftArea />
       <MiddleArea />
       <RightArea />
+      <Dialog
+        onClose={() => {
+          // ダイアログが閉じられた時の処理
+        }}
+        ref={menuDialogRef}
+      >
+        <MenuDialog
+          onClose={() => {
+            menuDialogRef.current?.close();
+          }}
+        />
+      </Dialog>
     </Expanded>
   );
 }

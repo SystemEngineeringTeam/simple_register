@@ -112,7 +112,7 @@ function Status(): ReactElement {
             <>
               <IconMaterialSymbolsError />
               <p.p>
-                商品が 1 つも選択されていません
+                商品が 1 つも入力されていません
               </p.p>
             </>
           ))

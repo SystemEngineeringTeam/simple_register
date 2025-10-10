@@ -10,7 +10,7 @@ import { $orderPhase } from "@/lib/stores/phase";
 
 const phase = {
   CHECK_RECEIPT_NUMBER: "受付番号確認",
-  SELECT_ITEMS: "商品選択",
+  SELECT_ITEMS: "商品入力",
   CHECK_DISCOUNT: "割引確認",
   PROCESS_PAYMENT: "支払い処理",
 } as const satisfies Record<OrderPhase, string>;
