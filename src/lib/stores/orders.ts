@@ -1,25 +1,34 @@
 import type { Order } from "@/types/order";
 import type { Nullable } from "@/types/utils";
 import { persistentAtom } from "@nanostores/persistent";
-import { atom } from "nanostores";
 import { SAMPLE_ORDERS } from "@/assets/data/sample-orders";
 import { getLocalStorageKey } from "@/lib/consts";
 import { waitMs } from "..";
 
+const coder = {
+  encode: JSON.stringify,
+  decode: JSON.parse,
+};
+
 export const $orders = persistentAtom<Order[]>(
   getLocalStorageKey("orders"),
   SAMPLE_ORDERS,
-  {
-    encode: JSON.stringify,
-    decode: JSON.parse,
-  },
+  coder,
 );
 
 // 最後に確定された注文のIDを追跡（ハイライト用）
-export const $lastConfirmedOrderId = atom<Nullable<string>>(null);
+export const $lastConfirmedOrderId = persistentAtom<Nullable<string>>(
+  getLocalStorageKey("lastConfirmedOrderId"),
+  null,
+  coder,
+);
 
 // 最後にステータス変更された注文の受付番号を追跡（ハイライト用）
-export const $lastStatusChangedReceiptNumber = atom<Nullable<number>>(null);
+export const $lastStatusChangedReceiptNumber = persistentAtom<Nullable<number>>(
+  getLocalStorageKey("lastStatusChangedReceiptNumber"),
+  null,
+  coder,
+);
 
 // 注文ステータスを変更する関数
 export function changeOrderStatus(

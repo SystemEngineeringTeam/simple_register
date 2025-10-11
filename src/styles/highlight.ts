@@ -21,6 +21,12 @@ export const highlight = defineGlobalStyles({
       animationIterationCount: "3",
       animationTimingFunction: "steps(2, jump-none)",
     },
+    "& [data-highlight-warn-once-longer='true']": {
+      animationDuration: "2s",
+      animationName: "highlight-warn",
+      animationIterationCount: "5",
+      animationTimingFunction: "steps(2, jump-none)",
+    },
   },
 });
 
