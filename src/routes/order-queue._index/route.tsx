@@ -4,6 +4,7 @@ import { OrderQueue } from "@/components/OrderQueue";
 export default function (): ReactElement {
   return (
     <OrderQueue
+      // cspell: disable-next-line
       filterGroupId="bf8hypkw4ahz8t6bv3i0o0ot"
       filterStatus="WAITING_COOKING"
       size="large"

@@ -10,7 +10,7 @@ import { Table } from "@/components/atomic/Table";
 import { OrderStatusLabel } from "@/components/OrderStatusLabel";
 import { ItemImpl } from "@/lib/item";
 import { OrderStatusImpl, ReceiptNumberImpl } from "@/lib/order";
-import { $currentOrder, $normalizedCurrentOrderItems } from "@/lib/stores/current-order";
+import { $currentOrder, $depositAmount, $normalizedCurrentOrderItems } from "@/lib/stores/current-order";
 import { $items } from "@/lib/stores/items";
 import { $lastConfirmedOrderId, $lastStatusChangedReceiptNumber, $orders } from "@/lib/stores/orders";
 import { $orderPhase } from "@/lib/stores/phase";
@@ -120,6 +120,7 @@ const ConfirmedOrdersList = memo((): ReactElement => {
 const UnconfirmedOrderPreview = memo((): ReactElement | null => {
   const currentOrder = useStore($currentOrder);
   const normalizedItems = useStore($normalizedCurrentOrderItems);
+  const depositAmount = useStore($depositAmount);
   const orderPhase = useStore($orderPhase);
   const items = useStore($items);
 
@@ -142,6 +143,10 @@ const UnconfirmedOrderPreview = memo((): ReactElement | null => {
     });
   });
 
+  // 預かり金額を数値に変換
+  const cleanedDeposit = (depositAmount || "0").replace(/,/g, "");
+  const depositAmountNumber = Number.parseInt(cleanedDeposit, 10);
+
   const previewOrderId = Order.get("id").from(currentOrder.orderId);
   const previewOrder: DisplayOrder = {
     id: previewOrderId,
@@ -153,6 +158,7 @@ const UnconfirmedOrderPreview = memo((): ReactElement | null => {
       ...item,
       itemNumber: item.itemNumber,
     })),
+    depositAmount: Order.get("depositAmount").from(depositAmountNumber),
   };
 
   return <OrderQueueRow order={previewOrder} />;

@@ -41,6 +41,7 @@
     "node_modules",
     "build/",
     "panda/",
-    "dist/"
+    "dist/",
+    "src-tauri/"
   ]
 }
