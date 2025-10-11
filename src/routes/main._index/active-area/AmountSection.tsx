@@ -173,6 +173,10 @@ export function AmountSection(): ReactElement {
     if (orderId != null && receiptNumber != null && createdAt != null) {
       const currentOrders = $orders.get();
 
+      // 預かり金額を数値に変換
+      const cleanedDeposit = (depositAmount || "0").replace(/,/g, "");
+      const depositAmountNumber = Number.parseInt(cleanedDeposit, 10);
+
       const newOrder: Order = {
         id: Order.get("id").from(orderId),
         receiptNumber,
@@ -189,6 +193,7 @@ export function AmountSection(): ReactElement {
           },
         ],
         items: orderItems as Array<typeof orderItems[number]>,
+        depositAmount: Order.get("depositAmount").from(depositAmountNumber),
       };
 
       $orders.set([...currentOrders, newOrder]);

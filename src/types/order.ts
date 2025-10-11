@@ -26,5 +26,6 @@ export const Order = type({
     at: "string.date.iso",
   }).array(),
   items: Item.merge({ amount: OrderItemAmount }).array(),
+  depositAmount: type("0 <= number.integer#depositAmount <= 100000"),
 });
 export type Order = typeof Order.infer;
