@@ -1,6 +1,8 @@
 import type { ReactElement, ReactNode } from "react";
 import type { Route } from "./+types/root";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { styled as p } from "panda/jsx";
+import { useEffect } from "react";
 import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
 import { Expanded } from "./components/atomic/Expanded";
 import { Loading } from "./components/Loading";
@@ -44,6 +46,10 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
 }
 
 export default function (): ReactElement {
+  useEffect(() => {
+    void getCurrentWindow().setFullscreen(true);
+  }, []);
+
   return (
     <Expanded>
       <p.main>
