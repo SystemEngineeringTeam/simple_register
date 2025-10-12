@@ -1,7 +1,6 @@
 import type { Order } from "@/types/order";
 import type { Nullable } from "@/types/utils";
 import { persistentAtom } from "@nanostores/persistent";
-import { SAMPLE_ORDERS } from "@/assets/data/sample-orders";
 import { getLocalStorageKey } from "@/lib/consts";
 import { waitMs } from "..";
 
@@ -12,7 +11,7 @@ const coder = {
 
 export const $orders = persistentAtom<Order[]>(
   getLocalStorageKey("orders"),
-  SAMPLE_ORDERS.concat(SAMPLE_ORDERS).concat(SAMPLE_ORDERS).concat(SAMPLE_ORDERS).concat(SAMPLE_ORDERS).concat(SAMPLE_ORDERS).concat(SAMPLE_ORDERS).concat(SAMPLE_ORDERS).concat(SAMPLE_ORDERS).concat(SAMPLE_ORDERS).concat(SAMPLE_ORDERS),
+  [],
   coder,
 );
 

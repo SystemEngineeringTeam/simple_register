@@ -1,12 +1,19 @@
 import type { DiscountNumber, Item, ItemNumber } from "@/types/item";
 import type { OrderItemAmount as OrderItemAmountType, ReceiptNumber } from "@/types/order";
 import type { Nullable } from "@/types/utils";
-import { atom, computed } from "nanostores";
+import { persistentAtom } from "@nanostores/persistent";
+import { computed } from "nanostores";
 import { wrapValidation } from "@/lib/arktype";
+import { getLocalStorageKey } from "@/lib/consts";
 import { ItemNumber as ItemNumberType } from "@/types/item";
 import { OrderItemAmount } from "@/types/order";
 import { $discounts } from "./discounts";
 import { $items } from "./items";
+
+const coder = {
+  encode: JSON.stringify,
+  decode: JSON.parse,
+};
 
 export type OrderRowInput = {
   id: number;
@@ -40,10 +47,40 @@ function createInitialRows(): OrderRowInput[] {
   return [createOrderRow()];
 }
 
-export const $currentOrder = atom<CurrentOrderState>(createInitialState());
-export const $orderRows = atom<OrderRowInput[]>(createInitialRows());
-export const $discountCode = atom<string>("");
-export const $depositAmount = atom<string>("");
+export const $currentOrder = persistentAtom<CurrentOrderState>(
+  getLocalStorageKey("currentOrder"),
+  createInitialState(),
+  coder,
+);
+export const $orderRows = persistentAtom<OrderRowInput[]>(
+  getLocalStorageKey("orderRows"),
+  createInitialRows(),
+  coder,
+);
+export const $discountCode = persistentAtom<string>(
+  getLocalStorageKey("discountCode"),
+  "",
+  coder,
+);
+function sanitizeNumericString(value: string): string {
+  if (value === "")
+    return "";
+
+  const digitsOnly = value.replace(/\D/g, "");
+  return digitsOnly;
+}
+
+export const $depositAmount = persistentAtom<string>(
+  getLocalStorageKey("depositAmount"),
+  "",
+  coder,
+);
+
+const initialDepositAmount = $depositAmount.get();
+const sanitizedInitialDepositAmount = sanitizeNumericString(initialDepositAmount);
+if (sanitizedInitialDepositAmount !== initialDepositAmount) {
+  $depositAmount.set(sanitizedInitialDepositAmount);
+}
 
 function updateState(updater: (previous: CurrentOrderState) => CurrentOrderState): void {
   $currentOrder.set(updater($currentOrder.get()));
@@ -81,7 +118,8 @@ export function setDiscountCode(value: string): void {
 }
 
 export function setDepositAmount(value: string): void {
-  $depositAmount.set(value);
+  const sanitized = sanitizeNumericString(value);
+  $depositAmount.set(sanitized);
 }
 
 export function updateOrderRows(mutator: (rows: OrderRowInput[]) => OrderRowInput[]): void {

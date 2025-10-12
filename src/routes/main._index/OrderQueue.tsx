@@ -199,7 +199,7 @@ export function OrderQueue(): ReactElement {
         <p.table w="full">
           <Table.head>
             <p.tr>
-              <p.th w="10"></p.th>
+              <p.th w="0"></p.th>
               <p.th w="20">受付番号</p.th>
               <p.th w="stretch">
                 注文内容

@@ -19,7 +19,7 @@ export default function (): ReactElement {
           receiptNumber: true,
           itemNumber: true,
           itemContent: true,
-          status: false,
+          status: true,
           orderTime: true,
           pickupTime: false,
         }}

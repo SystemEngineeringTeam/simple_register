@@ -25,7 +25,6 @@ import {
   $lastStatusChangedReceiptNumber,
   $orders,
 } from "@/lib/stores/orders";
-import { $orderPhase } from "@/lib/stores/phase";
 import { dateToStr } from "@/lib/time";
 import { Discount, DiscountNumber } from "@/types/item";
 import { Order } from "@/types/order";
@@ -267,11 +266,11 @@ const OrderQueueRow = memo(
         )}
         {visibleColumns?.status !== false && (
           <p.td className={styles.bodyCell} textAlign="center">
-            <OrderStatusLabel orderStatus={order.status} />
+            <OrderStatusLabel orderStatus={order.status} size={size} />
           </p.td>
         )}
         {visibleColumns?.orderTime !== false && (
-          <p.td className={styles.bodyCell} textAlign="center">
+          <p.td className={styles.bodyCell} fontFamily="mono" textAlign="center">
             {dateToStr(order.createdAt).timeOnly}
           </p.td>
         )}
@@ -392,14 +391,8 @@ const UnconfirmedOrderPreview = memo(
     const currentOrder = useStore($currentOrder);
     const normalizedItems = useStore($normalizedCurrentOrderItems);
     const depositAmount = useStore($depositAmount);
-    const orderPhase = useStore($orderPhase);
     const items = useStore($items);
     const discountCode = useStore($discountCode);
-
-    const isActivePhase
-      = orderPhase === "SELECT_ITEMS"
-        || orderPhase === "CHECK_DISCOUNT"
-        || orderPhase === "PROCESS_PAYMENT";
 
     // ステータスフィルターチェック（UNCONFIRMEDが含まれているかチェック）
     if (filterStatus != null) {
@@ -412,9 +405,9 @@ const UnconfirmedOrderPreview = memo(
       }
     }
 
+    // 受付番号が発行されていない場合は表示しない
     if (
-      !isActivePhase
-      || currentOrder.orderId == null
+      currentOrder.orderId == null
       || currentOrder.receiptNumber == null
     ) {
       return null;
@@ -512,9 +505,9 @@ export function OrderQueue({
             {size === "large"
               ? (
                   <p.tr className={styles.headerRow}>
-                    <p.th className={styles.headerCell} w="20"></p.th>
+                    <p.th className={styles.headerCell} w="0"></p.th>
                     {visibleColumns.receiptNumber !== false && (
-                      <p.th className={styles.headerCell} w="32">
+                      <p.th className={styles.headerCell} w="36">
                         受付番号
                       </p.th>
                     )}
@@ -560,7 +553,7 @@ export function OrderQueue({
                 )
               : (
                   <p.tr className={styles.headerRow}>
-                    <p.th className={styles.headerCell} w="10"></p.th>
+                    <p.th className={styles.headerCell} w="0"></p.th>
                     {visibleColumns.receiptNumber !== false && (
                       <p.th className={styles.headerCell} w="20">
                         受付番号
