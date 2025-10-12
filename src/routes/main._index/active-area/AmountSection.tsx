@@ -22,7 +22,7 @@ import {
 import { $lastConfirmedOrderId, $orders } from "@/lib/stores/orders";
 import { $orderPhase } from "@/lib/stores/phase";
 import { setStatusWithTimeout } from "@/lib/stores/status";
-import { DiscountNumber, ItemNumber } from "@/types/item";
+import { Discount, DiscountNumber, ItemNumber } from "@/types/item";
 import { Order } from "@/types/order";
 
 const TableBodyRow = p("tr", {
@@ -54,17 +54,20 @@ export function AmountSection(): ReactElement {
   type RightStep = "DISCOUNT" | "DEPOSIT" | "CONFIRM";
   const [rightStep, setRightStep] = useState<RightStep>("DISCOUNT");
 
+  // 割引情報の取得
+  const discountInfo = useMemo(() => {
+    const discountNumber = wrapValidation(
+      DiscountNumber(Number.parseInt(discountCode, 10)),
+    ).unwrapOr(null);
+    return discountNumber != null
+      ? findDiscountByNumber(discountNumber)
+      : null;
+  }, [discountCode]);
+
   // 合計金額と割引額の計算
   const { totalDiscount, total } = useMemo(() => {
     let subtotalAmount = 0;
     let totalDiscountAmount = 0;
-
-    const discountNumber = wrapValidation(
-      DiscountNumber(Number.parseInt(discountCode, 10)),
-    ).unwrapOr(null);
-    const discountInfo = discountNumber != null
-      ? findDiscountByNumber(discountNumber)
-      : null;
 
     for (const row of filledRows) {
       const itemNumber = wrapValidation(
@@ -194,6 +197,7 @@ export function AmountSection(): ReactElement {
         ],
         items: orderItems as Array<typeof orderItems[number]>,
         depositAmount: Order.get("depositAmount").from(depositAmountNumber),
+        appliedDiscount: discountInfo ? Discount.assert(discountInfo) : null,
       };
 
       $orders.set([...currentOrders, newOrder]);

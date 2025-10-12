@@ -7,6 +7,13 @@ export default function (): ReactElement {
       <p.a href="/main">main</p.a>
       <p.a href="/order-queue">order-queue</p.a>
       <p.a href="/pickup-monitor">pickup-monitor</p.a>
+      <p.p onClick={() => {
+        localStorage.clear();
+        location.reload();
+      }}
+      >
+        !DANGER!: RESET ORDER
+      </p.p>
     </VStack>
   );
 }

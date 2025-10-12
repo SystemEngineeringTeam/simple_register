@@ -8,13 +8,15 @@ import { match, P } from "ts-pattern";
 import { Expanded } from "@/components/atomic/Expanded";
 import { Table } from "@/components/atomic/Table";
 import { OrderStatusLabel } from "@/components/OrderStatusLabel";
+import { wrapValidation } from "@/lib/arktype";
 import { ItemImpl } from "@/lib/item";
 import { OrderStatusImpl, ReceiptNumberImpl } from "@/lib/order";
-import { $currentOrder, $depositAmount, $normalizedCurrentOrderItems } from "@/lib/stores/current-order";
+import { $currentOrder, $depositAmount, $discountCode, $normalizedCurrentOrderItems, findDiscountByNumber } from "@/lib/stores/current-order";
 import { $items } from "@/lib/stores/items";
 import { $lastConfirmedOrderId, $lastStatusChangedReceiptNumber, $orders } from "@/lib/stores/orders";
 import { $orderPhase } from "@/lib/stores/phase";
 import { dateToStr } from "@/lib/time";
+import { Discount, DiscountNumber } from "@/types/item";
 import { Order } from "@/types/order";
 
 type DisplayOrderItem = Order["items"][number] & { itemNumber: ItemNumber | null };
@@ -123,6 +125,7 @@ const UnconfirmedOrderPreview = memo((): ReactElement | null => {
   const depositAmount = useStore($depositAmount);
   const orderPhase = useStore($orderPhase);
   const items = useStore($items);
+  const discountCode = useStore($discountCode);
 
   const isActivePhase = orderPhase === "SELECT_ITEMS"
     || orderPhase === "CHECK_DISCOUNT"
@@ -147,6 +150,14 @@ const UnconfirmedOrderPreview = memo((): ReactElement | null => {
   const cleanedDeposit = (depositAmount || "0").replace(/,/g, "");
   const depositAmountNumber = Number.parseInt(cleanedDeposit, 10);
 
+  // 割引情報の処理
+  const discountNumber = wrapValidation(
+    DiscountNumber(Number.parseInt(discountCode, 10)),
+  ).unwrapOr(null);
+  const discountInfo = discountNumber != null
+    ? findDiscountByNumber(discountNumber)
+    : null;
+
   const previewOrderId = Order.get("id").from(currentOrder.orderId);
   const previewOrder: DisplayOrder = {
     id: previewOrderId,
@@ -159,6 +170,7 @@ const UnconfirmedOrderPreview = memo((): ReactElement | null => {
       itemNumber: item.itemNumber,
     })),
     depositAmount: Order.get("depositAmount").from(depositAmountNumber),
+    appliedDiscount: discountInfo ? Discount.assert(discountInfo) : null,
   };
 
   return <OrderQueueRow order={previewOrder} />;

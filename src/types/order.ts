@@ -1,5 +1,5 @@
 import { type } from "arktype";
-import { Item } from "./item";
+import { Discount, Item } from "./item";
 
 export const OrderNumber = type("0 <= number.integer#orderNumber <= 9999");
 export type OrderNumber = typeof OrderNumber.infer;
@@ -27,5 +27,6 @@ export const Order = type({
   }).array(),
   items: Item.merge({ amount: OrderItemAmount }).array(),
   depositAmount: type("0 <= number.integer#depositAmount <= 100000"),
+  appliedDiscount: Discount.or("null"),
 });
 export type Order = typeof Order.infer;

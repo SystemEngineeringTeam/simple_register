@@ -37,6 +37,8 @@ export const SAMPLE_ORDERS: Order[] = [
         amount: 1,
       },
     ],
+    depositAmount: 250,
+    appliedDiscount: null,
   }),
   Order.assert({
     id: createId(),
@@ -65,6 +67,8 @@ export const SAMPLE_ORDERS: Order[] = [
         amount: 1,
       },
     ],
+    depositAmount: 150,
+    appliedDiscount: null,
   }),
   Order.assert({
     id: createId(),
@@ -99,6 +103,8 @@ export const SAMPLE_ORDERS: Order[] = [
         amount: 1,
       },
     ],
+    depositAmount: 250,
+    appliedDiscount: null,
   }),
   Order.assert({
     id: createId(),
@@ -125,6 +131,8 @@ export const SAMPLE_ORDERS: Order[] = [
         amount: 3,
       },
     ],
+    depositAmount: 750,
+    appliedDiscount: null,
   }),
   Order.assert({
     id: createId(),
@@ -157,6 +165,8 @@ export const SAMPLE_ORDERS: Order[] = [
         amount: 2,
       },
     ],
+    depositAmount: 800,
+    appliedDiscount: null,
   }),
   Order.assert({
     id: createId(),
@@ -183,6 +193,8 @@ export const SAMPLE_ORDERS: Order[] = [
         amount: 1,
       },
     ],
+    depositAmount: 250,
+    appliedDiscount: null,
   }),
   Order.assert({
     id: createId(),
@@ -207,6 +219,8 @@ export const SAMPLE_ORDERS: Order[] = [
         amount: 4,
       },
     ],
+    depositAmount: 600,
+    appliedDiscount: null,
   }),
   Order.assert({
     id: createId(),
@@ -243,6 +257,8 @@ export const SAMPLE_ORDERS: Order[] = [
         amount: 3,
       },
     ],
+    depositAmount: 1050,
+    appliedDiscount: null,
   }),
   Order.assert({
     id: createId(),
@@ -273,6 +289,8 @@ export const SAMPLE_ORDERS: Order[] = [
         amount: 2,
       },
     ],
+    depositAmount: 500,
+    appliedDiscount: null,
   }),
   Order.assert({
     id: createId(),
@@ -294,6 +312,8 @@ export const SAMPLE_ORDERS: Order[] = [
         amount: 1,
       },
     ],
+    depositAmount: 300,
+    appliedDiscount: null,
   }),
   Order.assert({
     id: createId(),
@@ -321,6 +341,8 @@ export const SAMPLE_ORDERS: Order[] = [
         amount: 1,
       },
     ],
+    depositAmount: 450,
+    appliedDiscount: null,
   }),
   Order.assert({
     id: createId(),
@@ -336,6 +358,8 @@ export const SAMPLE_ORDERS: Order[] = [
         amount: 5,
       },
     ],
+    depositAmount: 500,
+    appliedDiscount: null,
   }),
   Order.assert({
     id: createId(),
@@ -357,6 +381,8 @@ export const SAMPLE_ORDERS: Order[] = [
         amount: 3,
       },
     ],
+    depositAmount: 650,
+    appliedDiscount: null,
   }),
   Order.assert({
     id: createId(),
@@ -372,6 +398,8 @@ export const SAMPLE_ORDERS: Order[] = [
         amount: 1,
       },
     ],
+    depositAmount: 150,
+    appliedDiscount: null,
   }),
   Order.assert({
     id: createId(),
@@ -399,5 +427,7 @@ export const SAMPLE_ORDERS: Order[] = [
         amount: 1,
       },
     ],
+    depositAmount: 900,
+    appliedDiscount: null,
   }),
 ];

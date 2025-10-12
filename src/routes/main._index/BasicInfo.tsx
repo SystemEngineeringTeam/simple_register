@@ -4,25 +4,8 @@ import { HStack, styled as p, VStack } from "panda/jsx";
 import { useMemo } from "react";
 import { Card } from "@/components/atomic/Card";
 import { Expanded } from "@/components/atomic/Expanded";
+import { Time } from "@/components/Time";
 import { $orders } from "@/lib/stores/orders";
-import { $nowTime, $nowTimeStr } from "@/lib/stores/time";
-
-function Time(): ReactElement {
-  const nowTime = useStore($nowTime);
-  const isOclock = nowTime.getMinutes() === 0 && nowTime.getSeconds() <= 20;
-  const nowTimeStr = useStore($nowTimeStr).dayAndTimeSec;
-
-  return (
-    <HStack data-highlight-warn={isOclock} px="1">
-      <IconMaterialSymbolsSchedule data-highlight-flash />
-      <p.code
-        fontSize="xl"
-      >
-        {nowTimeStr}
-      </p.code>
-    </HStack>
-  );
-}
 
 export function BasicInfo(): ReactElement {
   const orders = useStore($orders);
