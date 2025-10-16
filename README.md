@@ -1,5 +1,8 @@
 # simple_register_26
 
+| <img src="https://github.com/user-attachments/assets/f9e9bd6a-bec1-477a-a302-6d6a76477c05"  /> | <img src="https://github.com/user-attachments/assets/45fbd080-a5e0-438f-9079-5874836921c1" /> |
+|---|---|
+
 Tauri + React + TypeScript で作った、ローカルで動く「かんたんなレジ・受付番号」アプリです。軽く、速く、そして安心して使えるように設計しています。
 
 この README は「使い方・はじめ方」を中心にまとめています。設計やコーディングの詳しい指針は `AGENTS.md` をご覧ください。
