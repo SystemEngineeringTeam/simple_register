@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "simple_register",
+  "productName": "simple_register_26",
   "version": "0.1.0",
-  "identifier": "net.sysken.simple-register",
+  "identifier": "net.sysken.simple-register-26",
   "build": {
     "beforeDevCommand": "bun run dev",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "simple_register",
+        "title": "simple_register_26",
         "width": 800,
         "height": 600
       }

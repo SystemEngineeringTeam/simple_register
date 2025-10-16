@@ -12,7 +12,7 @@ type ConfigAntfu = Parameters<typeof antfu>[0];
 type Config = Parameters<typeof antfu>[1];
 
 const configTsTsx = {
-  ignores: ["panda/", "/panda.config.ts"],
+  ignores: ["panda/", "/panda.config.ts", "*.md"],
   stylistic: {
     quotes: "double",
     semi: true,

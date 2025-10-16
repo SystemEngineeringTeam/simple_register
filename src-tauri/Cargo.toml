@@ -1,7 +1,7 @@
 [package]
-name = "simple_register"
+name = "simple_register_26"
 version = "0.1.0"
-authors = ["wappon28dev <wappon28dev@ruru.be>"]
+authors = [ "wappon28dev <wappon28dev@ruru.be>" ]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -10,8 +10,12 @@ edition = "2021"
 # The `_lib` suffix may seem redundant but it is necessary
 # to make the lib name unique and wouldn't conflict with the bin name.
 # This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
-name = "simple_register_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
+name = "simple_register_26_lib"
+crate-type = [
+  "staticlib",
+  "cdylib",
+  "rlib"
+]
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
@@ -19,5 +23,5 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
-serde = { version = "1", features = ["derive"] }
+serde = { version = "1", features = [ "derive" ] }
 serde_json = "1"

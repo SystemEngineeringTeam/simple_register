@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "simple_register",
+      "name": "simple_register_26",
       "dependencies": {
         "@formkit/tempo": "^0.1.2",
         "@nanostores/persistent": "^1.1.0",

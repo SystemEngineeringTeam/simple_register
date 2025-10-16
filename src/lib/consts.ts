@@ -4,8 +4,8 @@ export const INFO = {
   id: name,
   version,
   name: {
-    ja: "シス研シンプルレジ",
-    en: "Sysken Simple Register",
+    ja: "シス研シンプルレジ ver. 2026",
+    en: "Sysken Simple Register ver. 2026",
   },
   word: {
   },

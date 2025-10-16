@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    simple_register_lib::run()
+    simple_register_26_lib::run()
 }
